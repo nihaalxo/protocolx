@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  line-height: normal;
+}
+
+:root {
+  /* Fonts */
+  --font-anime-ace-20-bb: "Anime Ace 20 BB";
+  --font-nasalization: Nasalization;
+  --font-roboto: Roboto;
+
+  /* font sizes */
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-5xl: 24px;
+  --font-size-9xl: 28px;
+
+  /* Colors */
+  --color-aqua: #00fff7;
+  --color-black: #000;
+  --color-white: #fff;
+
+  /* Border radiuses */
+  --br-5xs: 8px;
+  --br-11xl: 30px;
+}

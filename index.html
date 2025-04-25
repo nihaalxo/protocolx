@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+
+    <link rel="stylesheet" href="./global.css" />
+    <link rel="stylesheet" href="./index.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,500;1,400&display=swap"
+    />
+
+    <style>
+      @font-face {
+        font-family: "Nasalization";
+        src: url("./public/Nasalization Rg.otf");
+        font-weight: 400;
+      }
+      html,
+      body {
+        overflow-x: hidden;
+      }
+
+      @font-face {
+        font-family: "Anime Ace 20 BB";
+        src: url("./public/animeace2_reg.ttf");
+        font-weight: 400;
+      }
+
+      /* New Scaling CSS */
+      .scaler {
+        transform-origin: top left;
+      }
+    </style>
+
+    <!-- Vertex Shader for final compositing -->
+    <script id="vertexshader" type="x-shader/x-vertex">
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      }
+    </script>
+    <!-- Fragment Shader for final compositing -->
+    <script id="fragmentshader" type="x-shader/x-fragment">
+      uniform sampler2D baseTexture;
+      uniform sampler2D bloomTexture;
+      varying vec2 vUv;
+      void main() {
+        gl_FragColor = texture2D( baseTexture, vUv ) + texture2D( bloomTexture, vUv );
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Wrapping your entire site content inside the scaling container -->
+    <div class="scaler">
+      <div class="web-1920-7">
+        <div class="web-1920-7-child"></div>
+        <img class="web-1920-7-item" alt="" src="./public/rectangle-9@2x.png" />
+
+        <h2 class="nihaal-nazeer1">Nihaal Nazeer</h2>
+        <p class="uiux-designer1">UI/UX Designer</p>
+        <p class="nihaal-nazeer-is-container">
+          <span class="nihaal-nazeer-is-a">
+            <span>Nihaal Nazeer is a</span>
+          </span>
+          <span class="multidisciplinary-designer">
+            <span class="nihaal-nazeer-is-a"> </span>
+            <span class="multidisciplinary-designer1"
+              >Multidisciplinary Designer</span
+            >
+          </span>
+          <span class="nihaal-nazeer-is-a"> specialising in </span>
+          <span class="uiux-design">UI/UX Design</span>
+          <span class="nihaal-nazeer-is-a">, especially in </span>
+          <span class="uiux-design">new technology</span>
+          <span class="nihaal-nazeer-is-a">
+            <span>. He uses his powers to create</span>
+            <span class="multidisciplinary-designer"> </span>
+          </span>
+          <span class="multidisciplinary-designer">
+            <span class="multidisciplinary-designer1">innovative designs</span>
+          </span>
+          <span class="nihaal-nazeer-is-a">
+            <span> in the hopes of one day changing the world.</span>
+            <span class="multidisciplinary-designer"> </span>
+          </span>
+          <span class="multidisciplinary-designer">
+            <span class="multidisciplinary-designer1">Immersing users</span>
+          </span>
+          <span class="nihaal-nazeer-is-a">
+            <span> into the interface they are using can</span>
+            <span class="multidisciplinary-designer"> </span>
+          </span>
+          <span class="multidisciplinary-designer">
+            <span class="multidisciplinary-designer1">revolutionize</span>
+          </span>
+          <span class="nihaal-nazeer-is-a">
+            the way they use the service. This philosophy helps him create
+            designs that are
+          </span>
+          <span class="uiux-design">engaging</span>
+          <span class="nihaal-nazeer-is-a">
+            <span> and</span>
+          </span>
+          <span class="multidisciplinary-designer">
+            <span class="nihaal-nazeer-is-a"> </span>
+            <span class="multidisciplinary-designer1">aesthetic</span>
+          </span>
+          <span class="nihaal-nazeer-is-a">, while also being </span>
+          <span class="uiux-design">functional</span>
+          <span class="nihaal-nazeer-is-a"
+            >. After all, with great power, comes great responsibility.</span
+          >
+        </p>
+        <img class="powers-icon1" alt="" src="./public/powers.svg" />
+
+        <h2 class="powers1">POWERS</h2>
+        <img class="web-1920-7-inner" alt="" src="./public/line-1@2x.png" />
+
+        <img class="line-icon" alt="" src="./public/line-1@2x.png" />
+
+        <img class="rectangle-icon" alt="" src="./public/rectangle-4@2x.png" />
+
+        <img
+          class="web-1920-7-child1"
+          alt=""
+          src="./public/rectangle-5@2x.png"
+        />
+
+        <img
+          class="web-1920-7-child2"
+          alt=""
+          src="./public/rectangle-5@2x.png"
+        />
+
+        <img
+          class="web-1920-7-child3"
+          alt=""
+          src="./public/rectangle-7@2x.png"
+        />
+
+        <img
+          class="web-1920-7-child4"
+          alt=""
+          src="./public/rectangle-5@2x.png"
+        />
+
+        <p class="serione-and-silklon-container">
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Serione</span>
+            <span class="work"> and </span>
+            <span class="serione">Silklon</span>
+            <span class="nihaal-nazeer-is-a"> (sister companies).</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Royal Garden</span>
+            <span class="nihaal-nazeer-is-a"> Football Club.</span>
+          </span>
+        </p>
+        <p class="sesameed-education-beknown">
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Sesameed</span>
+            <span class="nihaal-nazeer-is-a"> Education.</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Be</span>
+            <span class="nihaal-nazeer-is-a">known.</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Zarafet</span>
+            <span class="nihaal-nazeer-is-a"> Boutique.</span>
+          </span>
+        </p>
+        <p class="sesameed-education-aranya-jo-container">
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Sesameed</span>
+            <span class="nihaal-nazeer-is-a"> Education.</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Aranya Johar</span>
+            <span class="work"> and </span>
+            <span class="serione">Yahya Bootwala</span>
+            <span class="nihaal-nazeer-is-a"> (Influencers).</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Zarafet</span>
+            <span class="nihaal-nazeer-is-a"> Boutique.</span>
+          </span>
+        </p>
+        <p class="co-head-of-identity-container">
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Co-head</span>
+            <span class="nihaal-nazeer-is-a">
+              of Identity, Curation and Production Teams for "</span
+            >
+            <span class="serione">afterglow</span>
+            <span class="work">" </span>
+            <span class="serione">exhibition</span>
+            <span class="work"> in </span>
+            <span class="serione">London</span>
+            <span class="nihaal-nazeer-is-a">.</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Jersey Design</span>
+            <span class="nihaal-nazeer-is-a">
+              for Royal Garden Football Club.</span
+            >
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">Commissioned </span>
+            <span class="serione">Art</span>
+            <span class="work"> and </span>
+            <span class="serione">Design</span>
+            <span class="work"> work.</span>
+          </span>
+        </p>
+        <p class="sesameed-education-beknown1">
+          <span class="serione-and-silklon-sister-co">
+            <span class="sesameed2">
+              <span class="multidisciplinary-designer">Sesameed</span>
+            </span>
+            <span>
+              <span class="sesameed2"> </span>
+              <span class="nihaal-nazeer-is-a">Education.</span>
+            </span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span>
+              <span class="nihaal-nazeer-is-a">&nbsp;</span>
+            </span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Be</span>
+            <span class="nihaal-nazeer-is-a">known.</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="serione">Adhiban Bhaskaran</span>
+            <span class="nihaal-nazeer-is-a"> (Chess Grandmaster).</span>
+          </span>
+        </p>
+        <p class="logo-and-branding">Logo and Branding</p>
+        <p class="social-media-design">Social Media Design</p>
+        <p class="posters-and-advertising">Posters and Advertising</p>
+        <p class="other">Other</p>
+        <p class="video-editing1">Video Editing</p>
+        <h2 class="top-missions1">TOP MISSIONS</h2>
+        <img class="web-1920-7-child5" alt="" src="./public/line-4@2x.png" />
+
+        <img class="web-1920-7-child6" alt="" src="./public/line-4@2x.png" />
+
+        <p class="ba-hons-graphic-container1">
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a"
+              >BA (Hons) Graphic and Media Design ;</span
+            >
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a"
+              >2022-2025 | London College of Communication (UAL)</span
+            >
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a">&nbsp;</span>
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a"
+              >Certificate in Higher Education for Design, Screen and Media
+              ;</span
+            >
+          </span>
+          <span class="serione-and-silklon-sister-co">
+            <span class="nihaal-nazeer-is-a"
+              >2021-2022 | London College of Communication (UAL)</span
+            >
+          </span>
+          <span class="uiux-design"> </span>
+          <span class="nihaal-nazeer-is-a"> </span>
+          <span class="uiux-design"> </span>
+          <span class="nihaal-nazeer-is-a"> </span>
+        </p>
+        <h2 class="education4">EDUCATION</h2>
+        <h2 class="hobbies1">HOBBIES</h2>
+        <img class="group-icon" alt="" src="./public/group-14.svg" />
+
+        <img class="web-1920-7-child7" alt="" src="./public/line-20@2x.png" />
+
+        <img class="web-1920-7-child8" alt="" src="./public/line-27@2x.png" />
+
+        <img class="web-1920-7-child9" alt="" src="./public/group-15@2x.png" />
+
+        <img
+          class="web-1920-7-child10"
+          alt=""
+          src="./public/rectangle-10@2x.png"
+        />
+
+        <p class="a-jack-of-container">
+          <span>"A </span>
+          <span class="multidisciplinary-designer">jack of all trades</span>
+          <span> is a </span>
+          <span class="multidisciplinary-designer">master</span>
+          <span> of </span>
+          <span class="multidisciplinary-designer">none</span>
+          <span>, but oftentimes </span>
+          <span class="multidisciplinary-designer">better</span>
+          <span> than a </span>
+          <span class="multidisciplinary-designer">master of one</span>
+          <span>."</span>
+        </p>
+        <a
+          class="simple-portfolio-here1"
+          href="https://nihaalnazeer.myportfolio.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >SIMPLE PORTFOLIO HERE !</a
+        >
+        <div class="or">OR</div>
+        <button class="press-group">
+          <div class="press1">Press</div>
+          <div class="for-secret-lair1">for Secret Lair</div>
+          <div class="f-container">
+            <div class="f1">F</div>
+          </div>
+        </button>
+        <img class="web-1920-7-child11" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child12" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child13" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child14" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child15" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child16" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child17" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child18" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child19" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child20" alt="" src="./public/line-28@2x.png" />
+
+        <img class="web-1920-7-child21" alt="" src="./public/line-28@2x.png" />
+
+        <div class="line-div"></div>
+        <div class="web-1920-7-child22"></div>
+        <div class="web-1920-7-child23"></div>
+      </div>
+    </div>
+    <!-- NEW: Canvas container for the 3D Model (right column) moved outside .scaler -->
+    <div id="canvas-container"></div>
+
+    <!-- New Scaling JavaScript -->
+    <script>
+      function scaleSite() {
+        var designWidth = 1920;
+        var designHeight = 3556; // Original design height
+        var scale = window.innerWidth / designWidth;
+        var scaledHeight = designHeight * scale;
+        var scaler = document.querySelector(".scaler");
+        scaler.style.transform = "scale(" + scale + ")";
+        scaler.style.height = scaledHeight + "px"; // Adjust container height
+      }
+      window.addEventListener("resize", scaleSite);
+      scaleSite();
+    </script>
+    <!-- Main JS for 3D model with bloom effect -->
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

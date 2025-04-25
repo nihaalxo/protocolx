@@ -1,0 +1,42 @@
+/* index.css for Interactive Website */
+
+/* Reset and basic body styles */
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Ensure any canvas fills its container */
+canvas {
+  display: block;
+}
+
+/* Full-screen video overlay for preloader */
+#video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  z-index: 10000;
+}
+
+#video-overlay video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10001;
+  background: rgba(255, 0, 0, 0.3); /* temporary red background */
+  border: 2px solid red; /* temporary border */
+  width: 50px;
+  height: 50px;
+}
