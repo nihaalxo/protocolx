@@ -238,7 +238,7 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault(); // Prevent any default behavior
     try {
       console.log("Navigating to interactive page...");
-      window.location.href = "/interactive/index.html";
+      window.location.href = "/interactive.html";
     } catch (error) {
       console.error("Navigation failed:", error);
     }
