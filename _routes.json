@@ -5,31 +5,66 @@
   "routes": [
     {
       "src": "/models/(.*)",
-      "dest": "https://nihaalnazeer.com/models/$1"
+      "dest": "https://nihaalnazeer.com/models/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/hdris/(.*)",
-      "dest": "https://nihaalnazeer.com/hdris/$1"
+      "dest": "https://nihaalnazeer.com/hdris/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/backgroundvideos/(.*)",
-      "dest": "https://nihaalnazeer.com/backgroundvideos/$1"
+      "dest": "https://nihaalnazeer.com/backgroundvideos/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/buttonoverlays/(.*)",
-      "dest": "https://nihaalnazeer.com/buttonoverlays/$1"
+      "dest": "https://nihaalnazeer.com/buttonoverlays/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/interactiveanimations/(.*)",
-      "dest": "https://nihaalnazeer.com/interactiveanimations/$1"
+      "dest": "https://nihaalnazeer.com/interactiveanimations/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/interactiveimages/(.*)",
-      "dest": "https://nihaalnazeer.com/interactiveimages/$1"
+      "dest": "https://nihaalnazeer.com/interactiveimages/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/videos/(.*)",
-      "dest": "https://nihaalnazeer.com/videos/$1"
+      "dest": "https://nihaalnazeer.com/videos/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://www.nihaalnazeer.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     }
   ]
 } 
