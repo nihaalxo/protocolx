@@ -56,7 +56,7 @@ pmremGenerator.compileEquirectangularShader();
 
 new EXRLoader()
   .setDataType(THREE.FloatType) // Use FloatType for EXR files
-  .load("/hdris/forest.exr", (texture) => {
+  .load("https://protocolx.nihaalnazeer.com/hdris/forest.exr", (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap; // Apply the HDRI as the environment map
     // Optionally, you can set the background as well:
@@ -111,7 +111,7 @@ loader.setDRACOLoader(dLoader);
 let loadedModel = null; // To store our model for scroll-driven rotation
 
 loader.load(
-  "interactive/models/superherov9.glb",
+  "https://protocolx.nihaalnazeer.com/interactive/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
 
