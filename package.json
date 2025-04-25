@@ -12,6 +12,7 @@
     "vite-plugin-wasm": "^3.4.1"
   },
   "dependencies": {
-    "three": "^0.175.0"
+    "three": "^0.175.0",
+    "vite-plugin-html": "^3.2.2"
   }
 }
