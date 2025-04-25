@@ -112,7 +112,7 @@ loader.setDRACOLoader(dLoader);
 let loadedModel = null; // To store our model for scroll-driven rotation
 
 loader.load(
-  "https://asset-proxy.nihaalnazeer.workers.dev/models/superherov9.glb",
+  "https://nihaalnazeer.com/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
 

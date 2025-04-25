@@ -11,7 +11,7 @@ new EXRLoader()
   });
 
 loader.load(
-  "https://asset-proxy.nihaalnazeer.workers.dev/models/superherov9.glb",
+  "https://nihaalnazeer.com/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
 // ... existing code ...
