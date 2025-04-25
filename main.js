@@ -54,17 +54,13 @@ controls.enablePan = false;
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
-new EXRLoader()
-  .setDataType(THREE.FloatType)
-  .setRequestHeader({
-    mode: 'no-cors'
-  })
-  .load("https://nihaalnazeer.com/hdris/forest.exr", (texture) => {
-    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    scene.environment = envMap;
-    texture.dispose();
-    pmremGenerator.dispose();
-  });
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load("https://nihaalnazeer.com/hdris/forest.jpg", (texture) => {
+  const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+  scene.environment = envMap;
+  texture.dispose();
+  pmremGenerator.dispose();
+});
 
 // ================================================================
 // Lighting Setup (Three-Point Lighting)
@@ -235,6 +231,13 @@ window.addEventListener("scroll", () => {
 // ================================================================
 document.addEventListener("keydown", (event) => {
   if (event.code === "KeyF") {
-    window.location.href = "/interactive/index.html";
+    console.log("F key pressed, attempting navigation...");
+    event.preventDefault(); // Prevent any default behavior
+    try {
+      console.log("Navigating to interactive page...");
+      window.location.replace("https://www.nihaalnazeer.com/interactive/index.html");
+    } catch (error) {
+      console.error("Navigation failed:", error);
+    }
   }
 });
