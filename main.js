@@ -54,13 +54,14 @@ controls.enablePan = false;
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
-const textureLoader = new THREE.TextureLoader();
-textureLoader.load("https://nihaalnazeer.com/hdris/forest.jpg", (texture) => {
-  const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-  scene.environment = envMap;
-  texture.dispose();
-  pmremGenerator.dispose();
-});
+new EXRLoader()
+  .setDataType(THREE.FloatType)
+  .load("https://nihaalnazeer.com/hdris/forest.exr", (texture) => {
+    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+    scene.environment = envMap;
+    texture.dispose();
+    pmremGenerator.dispose();
+  });
 
 // ================================================================
 // Lighting Setup (Three-Point Lighting)
