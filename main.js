@@ -56,7 +56,7 @@ pmremGenerator.compileEquirectangularShader();
 
 new EXRLoader()
   .setDataType(THREE.FloatType)
-  .load("https://nihaalnazeer.com/hdris/forest.exr", (texture) => {
+  .load("https://www.nihaalnazeer.com/hdris/forest.exr", (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;
     texture.dispose();
@@ -109,7 +109,7 @@ loader.setDRACOLoader(dLoader);
 let loadedModel = null; // To store our model for scroll-driven rotation
 
 loader.load(
-  "https://nihaalnazeer.com/models/superherov9.glb",
+  "https://www.nihaalnazeer.com/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
 
