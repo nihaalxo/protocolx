@@ -14,7 +14,7 @@ import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 // Parameters for bloom and tone mapping
 // ================================================================
 const params = {
-  exposure: 0,          // Overall exposure; adjust if needed
+  exposure: 0, // Overall exposure; adjust if needed
   bloomThreshold: 0.373,
   bloomStrength: 0.2,
   bloomRadius: 1.0,
@@ -76,7 +76,7 @@ scene.add(ambientLight);
 // 2. Key Light (front-facing to illuminate the face)
 //    Adjust the position as needed for optimal face lighting.
 const keyLight = new THREE.DirectionalLight(0xffffff, 0);
-keyLight.position.set(1, 2, 2);  // From front-right and above
+keyLight.position.set(1, 2, 2); // From front-right and above
 scene.add(keyLight);
 
 // 3. Fill Light (soft light from the opposite side to fill shadows)
@@ -86,7 +86,7 @@ scene.add(fillLight);
 
 // 4. Rim Light (to accentuate edges, optional)
 const rimLight = new THREE.DirectionalLight(0xffffff, 0);
-rimLight.position.set(0, 0, -3);  // Behind the model
+rimLight.position.set(0, 0, -3); // Behind the model
 scene.add(rimLight);
 
 // ================================================================
@@ -101,8 +101,10 @@ bloomLayer.set(1);
 const dLoader = new DRACOLoader();
 // Set the decoder path (adjust as needed, or use a CDN URL)
 // If using local installation, you may need to copy Draco files into your public folder.
-dLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); 
-dLoader.setDecoderConfig({ type: 'js' });
+dLoader.setDecoderPath(
+  "https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
+);
+dLoader.setDecoderConfig({ type: "js" });
 
 // Create a GLTFLoader and attach the DracoLoader
 const loader = new GLTFLoader();
@@ -178,7 +180,7 @@ composer.addPass(bloomPass);
 // ----- FIX: Prevent cloning error -----
 // Override the clone method on the render target texture so it simply returns itself.
 // This prevents Three.js from attempting to clone a render target texture in uniforms.
-composer.renderTarget2.texture.clone = function() {
+composer.renderTarget2.texture.clone = function () {
   return this;
 };
 
@@ -224,7 +226,8 @@ window.addEventListener("resize", () => {
 window.addEventListener("scroll", () => {
   if (loadedModel) {
     const scrollProgress =
-      window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+      window.scrollY /
+      (document.documentElement.scrollHeight - window.innerHeight);
     loadedModel.rotation.y = scrollProgress * 2 * Math.PI;
   }
 });
