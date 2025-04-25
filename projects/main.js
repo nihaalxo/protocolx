@@ -1,6 +1,6 @@
 new EXRLoader()
   .setDataType(THREE.FloatType)
-  .load("https://www.nihaalnazeer.com/hdris/forest.exr", (texture) => {
+  .load("https://nihaalnazeer.com/hdris/forest.exr", (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap;
     texture.dispose();
@@ -8,7 +8,7 @@ new EXRLoader()
   });
 
 loader.load(
-  "https://www.nihaalnazeer.com/models/superherov9.glb",
+  "https://nihaalnazeer.com/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
 // ... existing code ...
