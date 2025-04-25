@@ -148,15 +148,15 @@ loader.setDRACOLoader(dLoader);
 
 // Load room model (./models/roomv8.glb)
 loader.load(
-  './models/roomv8.glb',
+  'https://protocolx.nihaalnazeer.com/models/roomv8.glb',
   (gltf) => {
     // these are the mesh names in your GLTF you want to drive with video:
     const screenNames = ['news1','news2','news3','wallpaper'];
     const videoFiles  = {
-      news1:     'backgroundvideos/news1loop.mp4',
-      news2:     'backgroundvideos/news2loop.mp4',
-      news3:     'backgroundvideos/news3loop.mp4',
-      wallpaper: 'backgroundvideos/wallpaperloop.mp4',
+      news1:     'https://protocolx.nihaalnazeer.com/backgroundvideos/news1loop.mp4',
+      news2:     'https://protocolx.nihaalnazeer.com/backgroundvideos/news2loop.mp4',
+      news3:     'https://protocolx.nihaalnazeer.com/backgroundvideos/news3loop.mp4',
+      wallpaper: 'https://protocolx.nihaalnazeer.com/backgroundvideos/wallpaperloop.mp4',
     };
 
     scene.add(gltf.scene);
@@ -325,7 +325,7 @@ document.addEventListener('click', () => {
 let characterControls = null;
 
 loader.load(
-  './models/player.glb',
+  'https://protocolx.nihaalnazeer.com/models/player.glb',
   (gltf) => {
     const player = gltf.scene;
     player.rotation.y = Math.PI;
@@ -440,12 +440,12 @@ loader.load(
     scene.add(lightningLine);
 
     // Create audio for lightning
-    const lightningSound = new Audio('./videos/shootsound.mp3');
+    const lightningSound = new Audio('https://protocolx.nihaalnazeer.com/videos/shootsound.mp3');
     lightningSound.loop = true;
     let wasLightningActive = false;
 
     // Create audio for walking
-    const walkingSound = new Audio('./videos/walkingsound.mp3');
+    const walkingSound = new Audio('https://protocolx.nihaalnazeer.com/videos/walkingsound.mp3');
     walkingSound.loop = true;
     let wasWalkingActive = false;
 
@@ -657,7 +657,7 @@ loader.load(
 
     // Create and add the exit image with correct path
     const exitImage = document.createElement('img');
-    exitImage.src = './buttonoverlays/exit.png';
+    exitImage.src = 'https://protocolx.nihaalnazeer.com/buttonoverlays/exit.png';
     exitImage.style.width = '200px';
     exitImage.style.height = 'auto';
     exitOverlay.appendChild(exitImage);
@@ -675,7 +675,7 @@ loader.load(
 
     // Create and add the sit image
     const sitImage = document.createElement('img');
-    sitImage.src = './buttonoverlays/sit.png';
+    sitImage.src = 'https://protocolx.nihaalnazeer.com/buttonoverlays/sit.png';
     sitImage.style.width = '200px';
     sitImage.style.height = 'auto';
     sitOverlay.appendChild(sitImage);
@@ -697,7 +697,7 @@ loader.load(
 
     // Create video element
     const exitVideo = document.createElement('video');
-    exitVideo.src = './videos/exitvideo.mp4';
+    exitVideo.src = 'https://protocolx.nihaalnazeer.com/videos/exitvideo.mp4';
     exitVideo.style.width = '100vw';
     exitVideo.style.height = '100vh';
     exitVideo.style.objectFit = 'cover';
@@ -787,7 +787,7 @@ loader.load(
 
     portfolioButtons.forEach(btn => {
         const img = document.createElement('img');
-        img.src = `./buttonoverlays/${btn.name}.png`;
+        img.src = `https://protocolx.nihaalnazeer.com/buttonoverlays/${btn.name}.png`;
         img.className = btn.class;
         img.dataset.action = btn.name;
         portBtnOverlay.appendChild(img);
@@ -841,7 +841,7 @@ loader.load(
         }
 
         function play(src, onEnded) {
-            video.src = `./interactiveanimations/${src}`;
+            video.src = `https://protocolx.nihaalnazeer.com/interactiveanimations/${src}`;
             video.style.display = "block";
             video.currentTime = 0;
             video.onended = () => onEnded && onEnded();
@@ -857,7 +857,7 @@ loader.load(
 
         function showChoiceFreeze() {
             clearOverlay();         // make sure there's no old UI
-            video.src = "./interactiveanimations/choice.mp4";
+            video.src = "https://protocolx.nihaalnazeer.com/interactiveanimations/choice.mp4";
             video.style.display = "block";
             video.play().then(() => {
                 // immediately pause at the end-of-clip
@@ -871,12 +871,12 @@ loader.load(
             switch (state) {
                 case State.Choice:
                     return `
-                        <img src="./buttonoverlays/viewresume.png" class="choice-btn left" />
-                        <img src="./buttonoverlays/stand.png"      class="choice-btn center" />
-                        <img src="./buttonoverlays/viewportfolio.png" class="choice-btn right" />
+                        <img src="https://protocolx.nihaalnazeer.com/buttonoverlays/viewresume.png" class="choice-btn left" />
+                        <img src="https://protocolx.nihaalnazeer.com/buttonoverlays/stand.png"      class="choice-btn center" />
+                        <img src="https://protocolx.nihaalnazeer.com/buttonoverlays/viewportfolio.png" class="choice-btn right" />
                     `;
                 case State.Resume:
-                    return `<img src="./buttonoverlays/putdownresume.png" class="resume-btn bottom-left" />`;
+                    return `<img src="https://protocolx.nihaalnazeer.com/buttonoverlays/putdownresume.png" class="resume-btn bottom-left" />`;
                 case State.Portfolio:
                     return ""; // nothing for now
                 default:
@@ -912,7 +912,7 @@ loader.load(
                     play("viewportfolio.mp4", () => {
                         // Show first portfolio image
                         currentPortfolioIndex = 0;
-                        portfolioImage.src = `./interactiveimages/${portfolioItems[0].image}`;
+                        portfolioImage.src = `https://protocolx.nihaalnazeer.com/interactiveimages/${portfolioItems[0].image}`;
                         portfolioOverlay.style.display = 'block';
                         portBtnOverlay.style.display = 'block';
                         freezeFrame(State.Portfolio);
@@ -952,11 +952,11 @@ loader.load(
                 switch (e.key.toLowerCase()) {
                     case 'a': // previous
                         currentPortfolioIndex = (currentPortfolioIndex - 1 + portfolioItems.length) % portfolioItems.length;
-                        portfolioImage.src = `./interactiveimages/${portfolioItems[currentPortfolioIndex].image}`;
+                        portfolioImage.src = `https://protocolx.nihaalnazeer.com/interactiveimages/${portfolioItems[currentPortfolioIndex].image}`;
                         break;
                     case 'd': // next
                         currentPortfolioIndex = (currentPortfolioIndex + 1) % portfolioItems.length;
-                        portfolioImage.src = `./interactiveimages/${portfolioItems[currentPortfolioIndex].image}`;
+                        portfolioImage.src = `https://protocolx.nihaalnazeer.com/interactiveimages/${portfolioItems[currentPortfolioIndex].image}`;
                         break;
                     case 'c': // open link
                         window.open(portfolioItems[currentPortfolioIndex].link, '_blank');
