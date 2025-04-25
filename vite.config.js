@@ -7,7 +7,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         interactive: "/interactive/index.html",
-        // ...
+        // ....
         // List all files you want in your build
       },
     },
