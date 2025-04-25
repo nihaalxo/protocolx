@@ -148,15 +148,15 @@ loader.setDRACOLoader(dLoader);
 
 // Load room model (./models/roomv8.glb)
 loader.load(
-  './models/roomv8.glb',
+  'https://your-r2-bucket.r2.dev/models/roomv8.glb',
   (gltf) => {
     // these are the mesh names in your GLTF you want to drive with video:
     const screenNames = ['news1','news2','news3','wallpaper'];
     const videoFiles  = {
-      news1:     'backgroundvideos/news1loop.mp4',
-      news2:     'backgroundvideos/news2loop.mp4',
-      news3:     'backgroundvideos/news3loop.mp4',
-      wallpaper: 'backgroundvideos/wallpaperloop.mp4',
+      news1:     'https://your-r2-bucket.r2.dev/backgroundvideos/news1loop.mp4',
+      news2:     'https://your-r2-bucket.r2.dev/backgroundvideos/news2loop.mp4',
+      news3:     'https://your-r2-bucket.r2.dev/backgroundvideos/news3loop.mp4',
+      wallpaper: 'https://your-r2-bucket.r2.dev/backgroundvideos/wallpaperloop.mp4',
     };
 
     scene.add(gltf.scene);

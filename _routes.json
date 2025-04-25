@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": ["/assets/*"],
+  "routes": [
+    {
+      "src": "/models/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/models/$1"
+    },
+    {
+      "src": "/hdris/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/hdris/$1"
+    },
+    {
+      "src": "/backgroundvideos/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/backgroundvideos/$1"
+    },
+    {
+      "src": "/buttonoverlays/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/buttonoverlays/$1"
+    },
+    {
+      "src": "/interactiveanimations/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/interactiveanimations/$1"
+    },
+    {
+      "src": "/interactiveimages/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/interactiveimages/$1"
+    },
+    {
+      "src": "/videos/(.*)",
+      "dest": "https://your-r2-bucket.r2.dev/videos/$1"
+    }
+  ]
+} 
