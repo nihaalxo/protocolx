@@ -258,31 +258,15 @@ async function handleVRTransition() {
             renderer.xr.setSession(session);
         });
 
-        // Load font and create text mesh
-        const fontLoader = new FontLoader();
-        const font = await new Promise((resolve, reject) => {
-            fontLoader.load(
-                'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
-                resolve,
-                undefined,
-                reject
-            );
-        });
-
-        // Create a text mesh to verify VR rendering
-        const textGeometry = new TextGeometry('VR Test Text', {
-            font: font,
-            size: 0.2,
-            height: 0.05,
-        });
-        textGeometry.center(); // Center the text
-        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        // Create a simple red cube to verify VR rendering
+        const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         
-        // Create a group for the text
-        const textGroup = new THREE.Group();
-        textGroup.add(textMesh);
-        scene.add(textGroup);
+        // Create a group for the cube
+        const cubeGroup = new THREE.Group();
+        cubeGroup.add(cube);
+        scene.add(cubeGroup);
 
         // Create a video element
         const transitionVideo = document.createElement('video');
@@ -330,15 +314,18 @@ async function handleVRTransition() {
                 screenDirection.applyQuaternion(xrCamera.quaternion);
                 screenGroup.position.add(screenDirection.multiplyScalar(screenDistance));
 
-                // Position the text slightly above the screen
-                textGroup.position.copy(xrCamera.position);
-                textGroup.quaternion.copy(xrCamera.quaternion);
+                // Position the cube slightly to the right of the screen
+                cubeGroup.position.copy(xrCamera.position);
+                cubeGroup.quaternion.copy(xrCamera.quaternion);
                 
-                // Move the text forward and up
-                const textDirection = new THREE.Vector3(0, 0, -1);
-                textDirection.applyQuaternion(xrCamera.quaternion);
-                textGroup.position.add(textDirection.multiplyScalar(screenDistance + 0.5)); // 0.5 meters in front of screen
-                textGroup.position.y += 1; // 1 meter above screen
+                // Move the cube forward and to the right
+                const cubeDirection = new THREE.Vector3(1, 0, -1); // Forward and right
+                cubeDirection.applyQuaternion(xrCamera.quaternion);
+                cubeGroup.position.add(cubeDirection.multiplyScalar(screenDistance));
+
+                // Rotate the cube
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
             }
         };
 
@@ -354,12 +341,12 @@ async function handleVRTransition() {
             // Clean up video and screen
             transitionVideo.pause();
             scene.remove(screenGroup);
-            scene.remove(textGroup);
+            scene.remove(cubeGroup);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
-            textGeometry.dispose();
-            textMaterial.dispose();
+            cubeGeometry.dispose();
+            cubeMaterial.dispose();
             // Restore original animate function
             animate = originalAnimate;
         });
@@ -408,14 +395,14 @@ async function handleVRTransition() {
                 // Store VR session state in localStorage
                 localStorage.setItem('vrSessionActive', 'true');
                 
-                // Remove screen and text before transition
+                // Remove screen and cube before transition
                 scene.remove(screenGroup);
-                scene.remove(textGroup);
+                scene.remove(cubeGroup);
                 videoTexture.dispose();
                 videoScreen.geometry.dispose();
                 videoScreen.material.dispose();
-                textGeometry.dispose();
-                textMaterial.dispose();
+                cubeGeometry.dispose();
+                cubeMaterial.dispose();
                 
                 // Restore original animate function
                 animate = originalAnimate;
