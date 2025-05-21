@@ -29,14 +29,13 @@ let width = container.clientWidth;
 let height = container.clientHeight;
 renderer.setSize(width, height);
 
-// Enable XR
-renderer.xr.enabled = true;
-document.body.appendChild(VRButton.createButton(renderer));
-
 // REVERTED TONE MAPPING: Use ReinhardToneMapping instead of ACESFilmicToneMapping
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.toneMappingExposure = params.exposure;
 container.appendChild(renderer.domElement);
+
+// Add VR setup at the beginning of the file, after renderer initialization
+renderer.xr.enabled = true;
 
 const scene = new THREE.Scene();
 // Leave scene.background black to let the HDRI primarily affect lighting.
@@ -207,12 +206,10 @@ composer.addPass(finalPass);
 // Animation Loop – Render the scene
 // ================================================================
 function animate() {
-    requestAnimationFrame(animate);
-    controls.update(); // Even though interactions are disabled, damping may still update.
-    renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+  controls.update(); // Even though interactions are disabled, damping may still update.
+  composer.render();
 }
-
-// Start the animation loop
 animate();
 
 // ================================================================
@@ -247,6 +244,38 @@ let controller1, controller2;
 const vrCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 vrCamera.position.set(0, 1.6, 0); // Set initial position at eye level
 
+// Add test cube to scene
+const cubeGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+const cubeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const testCube = new THREE.Mesh(cubeGeo, cubeMat);
+testCube.position.set(0, 1.6, -2); // 2m in front of the user's eye height
+scene.add(testCube);
+
+// Modify the animation loop
+function renderLoop(timestamp, xrFrame) {
+    const delta = clock.getDelta();
+    
+    // Update VR manager
+    vrManager.update();
+
+    // Update character controls
+    const velocity = characterControls.update(delta, true);
+
+    // Apply movement to camera
+    if (velocity) {
+        camera.position.x += velocity.x * delta;
+        camera.position.y += velocity.y * delta;
+        camera.position.z += velocity.z * delta;
+    }
+
+    // Render the scene
+    composer.render();
+}
+
+// Set up the animation loop
+renderer.setAnimationLoop(renderLoop);
+
+// Modify the handleVRTransition function
 async function handleVRTransition() {
     try {
         // First, request VR session
@@ -255,21 +284,39 @@ async function handleVRTransition() {
             optionalFeatures: ['bounded-floor']
         });
 
+        // Set the XR session immediately
+        renderer.xr.setSession(session);
+
         // Wait for the session to be fully established
         await new Promise(resolve => {
             session.addEventListener('sessionstart', resolve, { once: true });
-            renderer.xr.setSession(session);
         });
 
-        // Create a simple red cube to verify VR rendering
-        const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        // Load font and create text mesh
+        const fontLoader = new FontLoader();
+        const font = await new Promise((resolve, reject) => {
+            fontLoader.load(
+                'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+                resolve,
+                undefined,
+                reject
+            );
+        });
+
+        // Create a text mesh to verify VR rendering
+        const textGeometry = new TextGeometry('VR Test Text', {
+            font: font,
+            size: 0.2,
+            height: 0.05,
+        });
+        textGeometry.center(); // Center the text
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
         
-        // Create a group for the cube
-        const cubeGroup = new THREE.Group();
-        cubeGroup.add(cube);
-        scene.add(cubeGroup);
+        // Create a group for the text
+        const textGroup = new THREE.Group();
+        textGroup.add(textMesh);
+        scene.add(textGroup);
 
         // Create a video element
         const transitionVideo = document.createElement('video');
@@ -317,26 +364,16 @@ async function handleVRTransition() {
                 screenDirection.applyQuaternion(xrCamera.quaternion);
                 screenGroup.position.add(screenDirection.multiplyScalar(screenDistance));
 
-                // Position the cube slightly to the right of the screen
-                cubeGroup.position.copy(xrCamera.position);
-                cubeGroup.quaternion.copy(xrCamera.quaternion);
+                // Position the text slightly above the screen
+                textGroup.position.copy(xrCamera.position);
+                textGroup.quaternion.copy(xrCamera.quaternion);
                 
-                // Move the cube forward and to the right
-                const cubeDirection = new THREE.Vector3(1, 0, -1); // Forward and right
-                cubeDirection.applyQuaternion(xrCamera.quaternion);
-                cubeGroup.position.add(cubeDirection.multiplyScalar(screenDistance));
-
-                // Rotate the cube
-                cube.rotation.x += 0.01;
-                cube.rotation.y += 0.01;
+                // Move the text forward and up
+                const textDirection = new THREE.Vector3(0, 0, -1);
+                textDirection.applyQuaternion(xrCamera.quaternion);
+                textGroup.position.add(textDirection.multiplyScalar(screenDistance + 0.5)); // 0.5 meters in front of screen
+                textGroup.position.y += 1; // 1 meter above screen
             }
-        };
-
-        // Add update function to animation loop
-        const originalAnimate = animate;
-        animate = function() {
-            originalAnimate();
-            updatePositions();
         };
 
         // Handle VR session end
@@ -344,14 +381,12 @@ async function handleVRTransition() {
             // Clean up video and screen
             transitionVideo.pause();
             scene.remove(screenGroup);
-            scene.remove(cubeGroup);
+            scene.remove(textGroup);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
-            cubeGeometry.dispose();
-            cubeMaterial.dispose();
-            // Restore original animate function
-            animate = originalAnimate;
+            textGeometry.dispose();
+            textMaterial.dispose();
         });
 
         // Load and play the video with proper error handling
@@ -398,17 +433,14 @@ async function handleVRTransition() {
                 // Store VR session state in localStorage
                 localStorage.setItem('vrSessionActive', 'true');
                 
-                // Remove screen and cube before transition
+                // Remove screen and text before transition
                 scene.remove(screenGroup);
-                scene.remove(cubeGroup);
+                scene.remove(textGroup);
                 videoTexture.dispose();
                 videoScreen.geometry.dispose();
                 videoScreen.material.dispose();
-                cubeGeometry.dispose();
-                cubeMaterial.dispose();
-                
-                // Restore original animate function
-                animate = originalAnimate;
+                textGeometry.dispose();
+                textMaterial.dispose();
                 
                 // Redirect to interactive world while maintaining VR session
                 window.location.href = "/interactive/index.html";
@@ -483,36 +515,3 @@ document.addEventListener("keydown", (event) => {
         handleVRTransition();
     }
 });
-
-// Add VR session start/end handlers
-renderer.xr.addEventListener('sessionstart', () => {
-    // Create cube when VR session starts
-    const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.position.set(0, 1.6, -2); // Position it 2 meters in front at eye level
-    scene.add(cube);
-
-    // Store cube reference for animation
-    scene.userData.cube = cube;
-});
-
-renderer.xr.addEventListener('sessionend', () => {
-    // Remove cube when VR session ends
-    if (scene.userData.cube) {
-        scene.remove(scene.userData.cube);
-        scene.userData.cube.geometry.dispose();
-        scene.userData.cube.material.dispose();
-        scene.userData.cube = null;
-    }
-});
-
-// Update animation loop to rotate cube only in VR
-const originalAnimate = animate;
-animate = function() {
-    if (scene.userData.cube) {
-        scene.userData.cube.rotation.x += 0.01;
-        scene.userData.cube.rotation.y += 0.01;
-    }
-    originalAnimate();
-};
