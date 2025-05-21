@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 
 // Import post-processing modules for bloom effects
@@ -115,7 +117,11 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
+renderer.xr.enabled = true; // Enable WebXR
 document.body.appendChild(renderer.domElement);
+
+// Add VR button
+document.body.appendChild(VRButton.createButton(renderer));
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -302,12 +308,37 @@ loader.load(
 
     // Make collision check function available globally
     window.checkCollision = checkCollision;
+
+    // Initialize character controls with the loaded model
+    const mixer = new THREE.AnimationMixer(gltf.scene);
+    const animationsMap = new Map();
+    animationsMap.set('idle', mixer.clipAction(gltf.animations[0]));
+    animationsMap.set('move', mixer.clipAction(gltf.animations[1]));
+    animationsMap.set('zap', mixer.clipAction(gltf.animations[2]));
+
+    const characterControls = new CharacterControls(
+      gltf.scene,
+      mixer,
+      animationsMap,
+      camera,
+      'idle'
+    );
+
+    // Animation loop
+    const clock = new THREE.Clock();
+    function animate() {
+      const delta = clock.getDelta();
+      characterControls.update(delta, {}, false);
+      composer.render();
+    }
+
+    renderer.setAnimationLoop(animate);
   },
   (xhr) => {
     const percentLoaded = (xhr.loaded / xhr.total) * 100;
   },
   (error) => {
-    // Keep error handler empty but present for stability
+    console.error('Error loading model:', error);
   }
 );
 
@@ -1046,31 +1077,9 @@ loader.load(
             crosshairElement.style.display = (isNearExit || isNearSit) ? 'none' : 'block';
         }
 
-        // Check for F press while in exit area
-        if (isNearExit && keysPressed['f']) {
-            // Hide game UI
-            exitOverlay.style.display = 'none';
-            if (crosshairElement) {
-                crosshairElement.style.display = 'none';
-            }
-            // Show and play video
-            videoOverlay.style.display = 'block';
-            exitVideo.play();
-            // Start preloading the destination page
-            preloadFrame.src = '../';
-            // Lock controls
-            controls.unlock();
-        }
-
-        // Check for F press while in sit area - only if not already in interaction
-        if (isNearSit && keysPressed['f'] && !inInteraction) {
-            // Hide game UI
-            sitOverlay.style.display = 'none';
-            if (crosshairElement) {
-                crosshairElement.style.display = 'none';
-            }
-            // Start interaction state
-            InteractionManager.enterState('sitting');
+        // Check for F press or VR controller A button
+        if ((isNearExit || (isNearSit && !inInteraction)) && (keysPressed['f'] || keysPressed['a'])) {
+            handleFKeyInteraction();
         }
 
         // Handle walking sound
@@ -1266,3 +1275,45 @@ videoEl.addEventListener("ended", () => {
   document.getElementById("video-overlay").style.display = "none";
   window.dispatchEvent(new Event("resize"));
 });
+
+// Add button for F key interaction
+const fKeyButton = document.createElement('button');
+fKeyButton.textContent = 'Enter Secret Lair';
+fKeyButton.style.position = 'absolute';
+fKeyButton.style.bottom = '20px';
+fKeyButton.style.left = '50%';
+fKeyButton.style.transform = 'translateX(-50%)';
+fKeyButton.style.padding = '10px 20px';
+fKeyButton.style.fontSize = '16px';
+fKeyButton.style.zIndex = '1000';
+fKeyButton.style.display = 'none'; // Initially hidden
+document.body.appendChild(fKeyButton);
+
+// Function to handle F key interaction
+function handleFKeyInteraction() {
+    if (isNearExit) {
+        // Hide game UI
+        exitOverlay.style.display = 'none';
+        if (crosshairElement) {
+            crosshairElement.style.display = 'none';
+        }
+        // Show and play video
+        videoOverlay.style.display = 'block';
+        exitVideo.play();
+        // Start preloading the destination page
+        preloadFrame.src = '../';
+        // Lock controls
+        controls.unlock();
+    } else if (isNearSit && !inInteraction) {
+        // Hide game UI
+        sitOverlay.style.display = 'none';
+        if (crosshairElement) {
+            crosshairElement.style.display = 'none';
+        }
+        // Start interaction state
+        InteractionManager.enterState('sitting');
+    }
+}
+
+// Add click handler for the button
+fKeyButton.addEventListener('click', handleFKeyInteraction);
