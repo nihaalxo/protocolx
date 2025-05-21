@@ -683,15 +683,15 @@ loader.load(
     exitOverlay.style.transform = 'translate(-50%, -50%)';
     exitOverlay.style.zIndex = '1000';
     exitOverlay.style.display = 'none';
-    exitOverlay.style.pointerEvents = 'auto'; // Make it clickable
+    exitOverlay.style.pointerEvents = 'auto';
     document.body.appendChild(exitOverlay);
 
     // Create and add the exit image with correct path
-    const exitImage = document.createElement('img');
-    exitImage.src = 'https://assets.nihaalnazeer.com/buttonoverlays/exit.png';
-    exitImage.style.width = '200px';
-    exitImage.style.height = 'auto';
-    exitImage.style.cursor = 'pointer'; // Show pointer cursor on hover
+    const exitImage = document.createElement('a');
+    exitImage.href = '/interactive/index.html';
+    exitImage.style.textDecoration = 'none';
+    exitImage.style.cursor = 'pointer';
+    exitImage.innerHTML = '<img src="https://assets.nihaalnazeer.com/buttonoverlays/exit.png" style="width: 200px; height: auto;" />';
     exitOverlay.appendChild(exitImage);
 
     // Add click handler to the exit overlay
