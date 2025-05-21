@@ -29,13 +29,14 @@ let width = container.clientWidth;
 let height = container.clientHeight;
 renderer.setSize(width, height);
 
+// Enable XR
+renderer.xr.enabled = true;
+document.body.appendChild(VRButton.createButton(renderer));
+
 // REVERTED TONE MAPPING: Use ReinhardToneMapping instead of ACESFilmicToneMapping
 renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.toneMappingExposure = params.exposure;
 container.appendChild(renderer.domElement);
-
-// Add VR setup at the beginning of the file, after renderer initialization
-renderer.xr.enabled = true;
 
 const scene = new THREE.Scene();
 // Leave scene.background black to let the HDRI primarily affect lighting.
@@ -206,10 +207,12 @@ composer.addPass(finalPass);
 // Animation Loop – Render the scene
 // ================================================================
 function animate() {
-  requestAnimationFrame(animate);
-  controls.update(); // Even though interactions are disabled, damping may still update.
-  composer.render();
+    requestAnimationFrame(animate);
+    controls.update(); // Even though interactions are disabled, damping may still update.
+    renderer.render(scene, camera);
 }
+
+// Start the animation loop
 animate();
 
 // ================================================================
@@ -480,3 +483,36 @@ document.addEventListener("keydown", (event) => {
         handleVRTransition();
     }
 });
+
+// Add VR session start/end handlers
+renderer.xr.addEventListener('sessionstart', () => {
+    // Create cube when VR session starts
+    const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.set(0, 1.6, -2); // Position it 2 meters in front at eye level
+    scene.add(cube);
+
+    // Store cube reference for animation
+    scene.userData.cube = cube;
+});
+
+renderer.xr.addEventListener('sessionend', () => {
+    // Remove cube when VR session ends
+    if (scene.userData.cube) {
+        scene.remove(scene.userData.cube);
+        scene.userData.cube.geometry.dispose();
+        scene.userData.cube.material.dispose();
+        scene.userData.cube = null;
+    }
+});
+
+// Update animation loop to rotate cube only in VR
+const originalAnimate = animate;
+animate = function() {
+    if (scene.userData.cube) {
+        scene.userData.cube.rotation.x += 0.01;
+        scene.userData.cube.rotation.y += 0.01;
+    }
+    originalAnimate();
+};
