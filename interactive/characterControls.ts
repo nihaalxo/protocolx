@@ -97,11 +97,8 @@ export class CharacterControls {
         const gamepads = navigator.getGamepads();
         if (!gamepads) return;
 
-        // Find Oculus Touch controllers
-        const controllers = Array.from(gamepads).filter(g => g && (
-            g.id.includes('Oculus Touch') || 
-            g.id.includes('oculus-touch-v3')
-        ));
+        // Find standard-mapped controllers
+        const controllers = Array.from(gamepads).filter(g => g && g.mapping === 'standard');
 
         if (controllers.length >= 2) {
             // Log controller details for debugging
@@ -109,6 +106,7 @@ export class CharacterControls {
                 if (controller) {
                     console.log(`Controller ${index}:`, {
                         id: controller.id,
+                        mapping: controller.mapping,
                         axes: controller.axes,
                         buttons: controller.buttons.map(b => b.pressed)
                     });
@@ -140,13 +138,13 @@ export class CharacterControls {
                 this.rightController = gamepads[this.rightController.index];
             }
 
-            if (this.leftController) {
-                // Left stick for mouse movement (axes 0,1)
+            if (this.leftController && this.leftController.mapping === 'standard') {
+                // Left stick for looking around (axes 0,1)
                 this.leftStickX = this.leftController.axes[0];
                 this.leftStickY = this.leftController.axes[1];
 
-                // Map A button to F key (button 4 on Oculus Touch)
-                if (this.leftController.buttons[4].pressed) {
+                // Map A button to F key (button 0 on standard mapping)
+                if (this.leftController.buttons[0].pressed) {
                     const event = new KeyboardEvent('keydown', { key: 'f' });
                     document.dispatchEvent(event);
                 } else {
@@ -154,8 +152,8 @@ export class CharacterControls {
                     document.dispatchEvent(event);
                 }
 
-                // Map X button to space bar (button 6 on Oculus Touch)
-                if (this.leftController.buttons[6].pressed) {
+                // Map X button to space bar (button 2 on standard mapping)
+                if (this.leftController.buttons[2].pressed) {
                     const event = new KeyboardEvent('keydown', { key: ' ' });
                     document.dispatchEvent(event);
                 } else {
@@ -164,13 +162,13 @@ export class CharacterControls {
                 }
             }
 
-            if (this.rightController) {
+            if (this.rightController && this.rightController.mapping === 'standard') {
                 // Right stick for WASD movement (axes 2,3)
                 this.rightStickX = this.rightController.axes[2];
                 this.rightStickY = this.rightController.axes[3];
 
-                // Right trigger for shooting (button 5 on Oculus Touch)
-                this.isShooting = this.rightController.buttons[5].pressed;
+                // Right trigger for shooting (button 7 on standard mapping)
+                this.isShooting = this.rightController.buttons[7].pressed;
             }
 
             this.gamepadLoop = requestAnimationFrame(pollGamepads);
