@@ -231,31 +231,8 @@ window.addEventListener("scroll", () => {
 });
 
 // ================================================================
-// Keydown Event to Redirect on "F" Key Press
+// VR Controller Support for Transition
 // ================================================================
-document.addEventListener("keydown", (event) => {
-  if (event.code === "KeyF") {
-    window.location.href = "/interactive/index.html";
-  }
-});
-
-// Add VR support
-renderer.xr.enabled = true;
-document.body.appendChild(VRButton.createButton(renderer));
-
-// Modify the keydown event to work with VR controllers
-function handleVRTransition() {
-    window.location.href = "/interactive/index.html";
-}
-
-// Keep keyboard support for development
-document.addEventListener("keydown", (event) => {
-    if (event.code === "KeyF") {
-        handleVRTransition();
-    }
-});
-
-// Add VR controller support
 let controller1, controller2;
 
 function onControllerSelectStart() {
@@ -266,11 +243,27 @@ function setupVRControllers() {
     controller1 = renderer.xr.getController(0);
     controller2 = renderer.xr.getController(1);
     
-    controller1.addEventListener('selectstart', onControllerSelectStart);
-    controller2.addEventListener('selectstart', onControllerSelectStart);
+    // Add gamepad polling for A button
+    const pollGamepads = () => {
+        const session = renderer.xr.getSession();
+        if (session) {
+            session.inputSources.forEach((inputSource) => {
+                const gamepad = inputSource.gamepad;
+                if (gamepad && inputSource.handedness === 'left' && gamepad.buttons[0].pressed) {
+                    handleVRTransition();
+                }
+            });
+        }
+        requestAnimationFrame(pollGamepads);
+    };
+    pollGamepads();
     
     scene.add(controller1);
     scene.add(controller2);
+}
+
+function handleVRTransition() {
+    window.location.href = "/interactive/index.html";
 }
 
 setupVRControllers();

@@ -26,9 +26,9 @@ export class VRManager {
         this.raycaster = new THREE.Raycaster();
         this.tempMatrix = new THREE.Matrix4();
 
-        // Enable XR
+        // Enable XR but don't create button
         this.renderer.xr.enabled = true;
-        document.body.appendChild(VRButton.createButton(this.renderer));
+        // document.body.appendChild(VRButton.createButton(this.renderer));
 
         // Setup controllers
         this.controllerModelFactory = new XRControllerModelFactory();
