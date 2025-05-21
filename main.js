@@ -254,8 +254,14 @@ scene.add(testCube);
 // Add VRButton for debugging
 document.body.appendChild(VRButton.createButton(renderer));
 
+// Enable XR
+renderer.xr.enabled = true;
+
 // Set up the XR render loop
-renderer.setAnimationLoop(function renderLoop(time, xrFrame) {
+renderer.setAnimationLoop((time, xrFrame) => {
+    // DEBUG: are we drawing?
+    console.log('XR frame!');
+
     const delta = clock.getDelta();
     
     // Update VR manager
@@ -271,8 +277,17 @@ renderer.setAnimationLoop(function renderLoop(time, xrFrame) {
         camera.position.z += velocity.z * delta;
     }
 
-    // Render the scene
-    composer.render();
+    // Update video texture if needed
+    if (transitionVideo && transitionVideo.readyState >= transitionVideo.HAVE_CURRENT_DATA) {
+        videoTexture.needsUpdate = true;
+    }
+
+    // Branch between VR and non-VR rendering
+    if (renderer.xr.isPresenting) {
+        renderer.render(scene, camera);
+    } else {
+        composer.render();
+    }
 });
 
 // Function to load the interactive room
@@ -326,20 +341,13 @@ async function handleVRTransition() {
         renderer.xr.setReferenceSpaceType('local-floor');
         renderer.xr.setSession(session);
 
-        // Add test cube
-        const probe = new THREE.Mesh(
-            new THREE.BoxGeometry(0.5, 0.5, 0.5),
-            new THREE.MeshBasicMaterial({ color: 0xff0000 })
-        );
-        probe.position.set(0, 1.6, -2);
-        scene.add(probe);
-
         // Create and play the video
         const transitionVideo = document.createElement('video');
         transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
         transitionVideo.crossOrigin = 'anonymous';
         transitionVideo.muted = false;
         transitionVideo.playsInline = true;
+        transitionVideo.setAttribute('playsinline', ''); // Quest needs this
         transitionVideo.volume = 1.0;
         transitionVideo.preload = 'auto';
 
@@ -360,40 +368,17 @@ async function handleVRTransition() {
             })
         );
 
-        // Create a group to hold the screen
-        const screenGroup = new THREE.Group();
-        screenGroup.add(videoScreen);
-        scene.add(screenGroup);
-
-        // Function to update screen position
-        const updateScreenPosition = () => {
-            if (renderer.xr.isPresenting) {
-                const xrCamera = renderer.xr.getCamera(camera);
-                screenGroup.position.copy(xrCamera.position);
-                screenGroup.quaternion.copy(xrCamera.quaternion);
-                
-                const screenDirection = new THREE.Vector3(0, 0, -1);
-                screenDirection.applyQuaternion(xrCamera.quaternion);
-                screenGroup.position.add(screenDirection.multiplyScalar(3));
-            }
-        };
-
-        // Add screen position update to render loop
-        const originalRenderLoop = renderer.getAnimationLoop();
-        renderer.setAnimationLoop((time, xrFrame) => {
-            originalRenderLoop(time, xrFrame);
-            updateScreenPosition();
-        });
+        // Parent the screen to the camera so it's always in view
+        videoScreen.position.set(0, 0, -2); // 2m in front of the camera
+        camera.add(videoScreen);
 
         // Handle session end
         session.addEventListener('end', () => {
             transitionVideo.pause();
-            scene.remove(screenGroup);
-            scene.remove(probe);
+            camera.remove(videoScreen);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
-            renderer.setAnimationLoop(originalRenderLoop);
         });
 
         // Load and play the video
@@ -416,9 +401,8 @@ async function handleVRTransition() {
 
             // Handle video end
             transitionVideo.onended = () => {
-                // Remove video screen and probe
-                scene.remove(screenGroup);
-                scene.remove(probe);
+                // Remove video screen
+                camera.remove(videoScreen);
                 videoTexture.dispose();
                 videoScreen.geometry.dispose();
                 videoScreen.material.dispose();
