@@ -256,13 +256,15 @@ async function handleVRTransition() {
             renderer.xr.setSession(session);
         });
 
-        // Create video element
+        // Create video element with proper audio setup
         const transitionVideo = document.createElement('video');
         transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
         transitionVideo.loop = false;
         transitionVideo.muted = false;
         transitionVideo.playsInline = true;
         transitionVideo.crossOrigin = 'anonymous';
+        transitionVideo.volume = 1.0; // Ensure full volume
+        transitionVideo.preload = 'auto'; // Preload the video
 
         // Create video texture
         const videoTexture = new THREE.VideoTexture(transitionVideo);
@@ -270,9 +272,11 @@ async function handleVRTransition() {
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBFormat;
 
-        // Create a full-screen quad that follows the camera
-        const videoQuad = new THREE.Mesh(
-            new THREE.PlaneGeometry(16, 9), // 16:9 aspect ratio
+        // Create a large screen in VR space
+        const screenWidth = 4; // 4 meters wide
+        const screenHeight = screenWidth * (9/16); // Maintain 16:9 aspect ratio
+        const videoScreen = new THREE.Mesh(
+            new THREE.PlaneGeometry(screenWidth, screenHeight),
             new THREE.MeshBasicMaterial({
                 map: videoTexture,
                 side: THREE.DoubleSide,
@@ -280,26 +284,26 @@ async function handleVRTransition() {
             })
         );
 
-        // Create a camera-relative group
-        const videoGroup = new THREE.Group();
-        videoGroup.add(videoQuad);
-        scene.add(videoGroup);
+        // Create a group to hold the screen
+        const screenGroup = new THREE.Group();
+        screenGroup.add(videoScreen);
+        scene.add(screenGroup);
 
-        // Update function to keep video in front of camera
-        const updateVideoPosition = () => {
+        // Function to update screen position in VR
+        const updateScreenPosition = () => {
             if (renderer.xr.isPresenting) {
                 // Get the current XR camera
                 const xrCamera = renderer.xr.getCamera(camera);
                 
-                // Position the video group in front of the camera
-                const distance = 2; // 2 meters in front
-                videoGroup.position.copy(xrCamera.position);
-                videoGroup.quaternion.copy(xrCamera.quaternion);
+                // Position the screen in front of the camera
+                const distance = 3; // 3 meters in front
+                screenGroup.position.copy(xrCamera.position);
+                screenGroup.quaternion.copy(xrCamera.quaternion);
                 
-                // Move the video forward in the direction the camera is facing
+                // Move the screen forward in the direction the camera is facing
                 const direction = new THREE.Vector3(0, 0, -1);
                 direction.applyQuaternion(xrCamera.quaternion);
-                videoGroup.position.add(direction.multiplyScalar(distance));
+                screenGroup.position.add(direction.multiplyScalar(distance));
             }
         };
 
@@ -307,39 +311,56 @@ async function handleVRTransition() {
         const originalAnimate = animate;
         animate = function() {
             originalAnimate();
-            updateVideoPosition();
+            updateScreenPosition();
         };
 
         // Handle VR session end
         session.addEventListener('end', () => {
-            // Clean up video and quad
+            // Clean up video and screen
             transitionVideo.pause();
-            scene.remove(videoGroup);
+            scene.remove(screenGroup);
             videoTexture.dispose();
-            videoQuad.geometry.dispose();
-            videoQuad.material.dispose();
+            videoScreen.geometry.dispose();
+            videoScreen.material.dispose();
             // Restore original animate function
             animate = originalAnimate;
         });
 
-        // Wait for video to be ready
+        // Wait for video to be ready and play with audio
         await new Promise((resolve) => {
             transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
             transitionVideo.load();
         });
 
-        // Play video only after VR session is established
-        await transitionVideo.play();
+        // Ensure audio context is running (required for some browsers)
+        if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            const audioContext = new AudioContextClass();
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+        }
+
+        // Play video with audio
+        try {
+            await transitionVideo.play();
+        } catch (error) {
+            console.error('Error playing video:', error);
+            // If autoplay fails, try playing after user interaction
+            document.addEventListener('click', () => {
+                transitionVideo.play();
+            }, { once: true });
+        }
 
         // Handle video end
         transitionVideo.onended = () => {
             // Store VR session state in localStorage
             localStorage.setItem('vrSessionActive', 'true');
-            // Remove video group before transition
-            scene.remove(videoGroup);
+            // Remove screen before transition
+            scene.remove(screenGroup);
             videoTexture.dispose();
-            videoQuad.geometry.dispose();
-            videoQuad.material.dispose();
+            videoScreen.geometry.dispose();
+            videoScreen.material.dispose();
             // Restore original animate function
             animate = originalAnimate;
             // Redirect to interactive world while maintaining VR session
@@ -364,6 +385,8 @@ async function handleVRTransition() {
         transitionVideo.style.width = '100vw';
         transitionVideo.style.height = '100vh';
         transitionVideo.style.objectFit = 'cover';
+        transitionVideo.muted = false;
+        transitionVideo.volume = 1.0;
         videoOverlay.appendChild(transitionVideo);
 
         transitionVideo.play();
