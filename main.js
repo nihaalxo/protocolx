@@ -259,27 +259,61 @@ async function handleVRTransition() {
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBFormat;
 
-        // Create a large plane to display the video
-        const videoPlane = new THREE.Mesh(
-            new THREE.PlaneGeometry(16, 9), // 16:9 aspect ratio
+        // Create a full-screen quad that follows the camera
+        const videoQuad = new THREE.Mesh(
+            new THREE.PlaneGeometry(2, 2),
             new THREE.MeshBasicMaterial({
                 map: videoTexture,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide,
+                transparent: true
             })
         );
 
-        // Position the plane in front of the user
-        videoPlane.position.set(0, 0, -2);
-        scene.add(videoPlane);
+        // Create a camera-relative group
+        const videoGroup = new THREE.Group();
+        videoGroup.add(videoQuad);
+        scene.add(videoGroup);
+
+        // Update function to keep video in front of camera
+        const updateVideoPosition = () => {
+            if (renderer.xr.isPresenting) {
+                // Get the current camera position and rotation
+                const cameraPosition = new THREE.Vector3();
+                const cameraQuaternion = new THREE.Quaternion();
+                const cameraMatrix = new THREE.Matrix4();
+                
+                // Get the current XR camera matrix
+                const xrCamera = renderer.xr.getCamera(camera);
+                xrCamera.getWorldPosition(cameraPosition);
+                xrCamera.getWorldQuaternion(cameraQuaternion);
+                
+                // Position the video group slightly in front of the camera
+                const distance = 2; // 2 meters in front
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(cameraQuaternion);
+                
+                videoGroup.position.copy(cameraPosition).add(direction.multiplyScalar(distance));
+                videoGroup.quaternion.copy(cameraQuaternion);
+            }
+        };
+
+        // Add update function to animation loop
+        const originalAnimate = animate;
+        animate = function() {
+            originalAnimate();
+            updateVideoPosition();
+        };
 
         // Handle VR session end
         session.addEventListener('end', () => {
-            // Clean up video and plane
+            // Clean up video and quad
             transitionVideo.pause();
-            scene.remove(videoPlane);
+            scene.remove(videoGroup);
             videoTexture.dispose();
-            videoPlane.geometry.dispose();
-            videoPlane.material.dispose();
+            videoQuad.geometry.dispose();
+            videoQuad.material.dispose();
+            // Restore original animate function
+            animate = originalAnimate;
         });
 
         // Play video
@@ -289,11 +323,13 @@ async function handleVRTransition() {
         transitionVideo.onended = () => {
             // Store VR session state in localStorage
             localStorage.setItem('vrSessionActive', 'true');
-            // Remove video plane before transition
-            scene.remove(videoPlane);
+            // Remove video group before transition
+            scene.remove(videoGroup);
             videoTexture.dispose();
-            videoPlane.geometry.dispose();
-            videoPlane.material.dispose();
+            videoQuad.geometry.dispose();
+            videoQuad.material.dispose();
+            // Restore original animate function
+            animate = originalAnimate;
             // Redirect to interactive world while maintaining VR session
             window.location.href = "/interactive/index.html";
         };
