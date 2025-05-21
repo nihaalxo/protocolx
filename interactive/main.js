@@ -683,7 +683,7 @@ loader.load(
     exitOverlay.style.transform = 'translate(-50%, -50%)';
     exitOverlay.style.zIndex = '1000';
     exitOverlay.style.display = 'none';
-    exitOverlay.style.pointerEvents = 'none';
+    exitOverlay.style.pointerEvents = 'auto'; // Make it clickable
     document.body.appendChild(exitOverlay);
 
     // Create and add the exit image with correct path
@@ -691,7 +691,24 @@ loader.load(
     exitImage.src = 'https://assets.nihaalnazeer.com/buttonoverlays/exit.png';
     exitImage.style.width = '200px';
     exitImage.style.height = 'auto';
+    exitImage.style.cursor = 'pointer'; // Show pointer cursor on hover
     exitOverlay.appendChild(exitImage);
+
+    // Add click handler to the exit overlay
+    exitOverlay.addEventListener('click', () => {
+        // Hide game UI
+        exitOverlay.style.display = 'none';
+        if (crosshairElement) {
+            crosshairElement.style.display = 'none';
+        }
+        // Show and play video
+        videoOverlay.style.display = 'block';
+        exitVideo.play();
+        // Start preloading the destination page
+        preloadFrame.src = '../';
+        // Lock controls
+        controls.unlock();
+    });
 
     // Create overlay for sit action
     const sitOverlay = document.createElement('div');
@@ -1287,6 +1304,23 @@ fKeyButton.style.padding = '10px 20px';
 fKeyButton.style.fontSize = '16px';
 fKeyButton.style.zIndex = '1000';
 fKeyButton.style.display = 'none'; // Initially hidden
+fKeyButton.style.backgroundColor = '#4CAF50';
+fKeyButton.style.color = 'white';
+fKeyButton.style.border = 'none';
+fKeyButton.style.borderRadius = '5px';
+fKeyButton.style.cursor = 'pointer';
+fKeyButton.style.pointerEvents = 'auto'; // Make sure it's clickable
+fKeyButton.style.transition = 'background-color 0.3s';
+
+// Add hover effect
+fKeyButton.addEventListener('mouseover', () => {
+    fKeyButton.style.backgroundColor = '#45a049';
+});
+
+fKeyButton.addEventListener('mouseout', () => {
+    fKeyButton.style.backgroundColor = '#4CAF50';
+});
+
 document.body.appendChild(fKeyButton);
 
 // Function to handle F key interaction
