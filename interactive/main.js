@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
 // Import post-processing modules for bloom effects
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -117,20 +116,25 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// Enable XR and add VR button
-renderer.xr.enabled = true;
-const vrButton = VRButton.createButton(renderer);
-document.body.appendChild(vrButton);
-
-// Add F key handler to trigger VR
-window.addEventListener('keydown', e => {
-    if (e.key.toLowerCase() === 'f') {
-        vrButton.click();
-    }
-});
-
 // Initialize VR Manager
 const vrManager = new VRManager(renderer, scene, camera);
+
+// Check if we should start in VR mode
+if (localStorage.getItem('vrSessionActive') === 'true') {
+    // Clear the flag
+    localStorage.removeItem('vrSessionActive');
+    
+    // Start VR session
+    renderer.xr.enabled = true;
+    navigator.xr.requestSession('immersive-vr', {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['bounded-floor']
+    }).then(session => {
+        renderer.xr.setSession(session);
+    }).catch(error => {
+        console.error('Error starting VR session:', error);
+    });
+}
 
 // Initialize character controls
 let characterControls = new CharacterControls(camera, document.body);
@@ -1226,10 +1230,10 @@ function animate() {
     }
 
     composer.render();
+    requestAnimationFrame(animate);
 }
 
-// Use setAnimationLoop for VR
-renderer.setAnimationLoop(animate);
+animate();
 
 // -----------------------------------------------------------------
 // WINDOW RESIZE HANDLING

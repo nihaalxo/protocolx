@@ -236,33 +236,93 @@ window.addEventListener("scroll", () => {
 let controller1, controller2;
 
 async function handleVRTransition() {
-    // Create video overlay for transition
-    const videoOverlay = document.createElement('div');
-    videoOverlay.style.position = 'fixed';
-    videoOverlay.style.top = '0';
-    videoOverlay.style.left = '0';
-    videoOverlay.style.width = '100%';
-    videoOverlay.style.height = '100%';
-    videoOverlay.style.backgroundColor = 'black';
-    videoOverlay.style.zIndex = '2000';
-    document.body.appendChild(videoOverlay);
+    try {
+        // First, request VR session
+        renderer.xr.enabled = true;
+        const session = await navigator.xr.requestSession('immersive-vr', {
+            requiredFeatures: ['local-floor'],
+            optionalFeatures: ['bounded-floor']
+        });
+        renderer.xr.setSession(session);
 
-    // Create video element
-    const transitionVideo = document.createElement('video');
-    transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
-    transitionVideo.style.width = '100vw';
-    transitionVideo.style.height = '100vh';
-    transitionVideo.style.objectFit = 'cover';
-    videoOverlay.appendChild(transitionVideo);
+        // Create video element
+        const transitionVideo = document.createElement('video');
+        transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
+        transitionVideo.loop = false;
+        transitionVideo.muted = false;
+        transitionVideo.playsInline = true;
+        transitionVideo.crossOrigin = 'anonymous';
 
-    // Play video
-    await transitionVideo.play();
+        // Create video texture
+        const videoTexture = new THREE.VideoTexture(transitionVideo);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
 
-    // Handle video end
-    transitionVideo.onended = () => {
-        // Simply navigate to interactive page
-        window.location.href = "/interactive/index.html";
-    };
+        // Create a large plane to display the video
+        const videoPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(16, 9), // 16:9 aspect ratio
+            new THREE.MeshBasicMaterial({
+                map: videoTexture,
+                side: THREE.DoubleSide
+            })
+        );
+
+        // Position the plane in front of the user
+        videoPlane.position.set(0, 0, -2);
+        scene.add(videoPlane);
+
+        // Handle VR session end
+        session.addEventListener('end', () => {
+            // Clean up video and plane
+            transitionVideo.pause();
+            scene.remove(videoPlane);
+            videoTexture.dispose();
+            videoPlane.geometry.dispose();
+            videoPlane.material.dispose();
+        });
+
+        // Play video
+        await transitionVideo.play();
+
+        // Handle video end
+        transitionVideo.onended = () => {
+            // Store VR session state in localStorage
+            localStorage.setItem('vrSessionActive', 'true');
+            // Remove video plane before transition
+            scene.remove(videoPlane);
+            videoTexture.dispose();
+            videoPlane.geometry.dispose();
+            videoPlane.material.dispose();
+            // Redirect to interactive world while maintaining VR session
+            window.location.href = "/interactive/index.html";
+        };
+
+    } catch (error) {
+        console.error('Error starting VR session:', error);
+        // If VR fails, fall back to normal video transition
+        const videoOverlay = document.createElement('div');
+        videoOverlay.style.position = 'fixed';
+        videoOverlay.style.top = '0';
+        videoOverlay.style.left = '0';
+        videoOverlay.style.width = '100%';
+        videoOverlay.style.height = '100%';
+        videoOverlay.style.backgroundColor = 'black';
+        videoOverlay.style.zIndex = '2000';
+        document.body.appendChild(videoOverlay);
+
+        const transitionVideo = document.createElement('video');
+        transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
+        transitionVideo.style.width = '100vw';
+        transitionVideo.style.height = '100vh';
+        transitionVideo.style.objectFit = 'cover';
+        videoOverlay.appendChild(transitionVideo);
+
+        transitionVideo.play();
+        transitionVideo.onended = () => {
+            window.location.href = "/interactive/index.html";
+        };
+    }
 }
 
 // Add click handler to the button
