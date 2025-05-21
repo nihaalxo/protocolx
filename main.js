@@ -251,8 +251,8 @@ const testCube = new THREE.Mesh(cubeGeo, cubeMat);
 testCube.position.set(0, 1.6, -2); // 2m in front of the user's eye height
 scene.add(testCube);
 
-// Modify the animation loop
-function renderLoop(timestamp, xrFrame) {
+// Set up the XR render loop
+renderer.setAnimationLoop(function renderLoop(time, xrFrame) {
     const delta = clock.getDelta();
     
     // Update VR manager
@@ -270,10 +270,7 @@ function renderLoop(timestamp, xrFrame) {
 
     // Render the scene
     composer.render();
-}
-
-// Set up the animation loop
-renderer.setAnimationLoop(renderLoop);
+});
 
 // Modify the handleVRTransition function
 async function handleVRTransition() {
@@ -292,34 +289,10 @@ async function handleVRTransition() {
             session.addEventListener('sessionstart', resolve, { once: true });
         });
 
-        // Load font and create text mesh
-        const fontLoader = new FontLoader();
-        const font = await new Promise((resolve, reject) => {
-            fontLoader.load(
-                'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
-                resolve,
-                undefined,
-                reject
-            );
-        });
-
-        // Create a text mesh to verify VR rendering
-        const textGeometry = new TextGeometry('VR Test Text', {
-            font: font,
-            size: 0.2,
-            height: 0.05,
-        });
-        textGeometry.center(); // Center the text
-        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        
-        // Create a group for the text
-        const textGroup = new THREE.Group();
-        textGroup.add(textMesh);
-        scene.add(textGroup);
-
-        // Create a video element
+        // Create and play the video element
         const transitionVideo = document.createElement('video');
+        transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
+        transitionVideo.crossOrigin = 'anonymous';
         transitionVideo.muted = false;
         transitionVideo.playsInline = true;
         transitionVideo.volume = 1.0;
@@ -363,16 +336,6 @@ async function handleVRTransition() {
                 const screenDirection = new THREE.Vector3(0, 0, -1);
                 screenDirection.applyQuaternion(xrCamera.quaternion);
                 screenGroup.position.add(screenDirection.multiplyScalar(screenDistance));
-
-                // Position the text slightly above the screen
-                textGroup.position.copy(xrCamera.position);
-                textGroup.quaternion.copy(xrCamera.quaternion);
-                
-                // Move the text forward and up
-                const textDirection = new THREE.Vector3(0, 0, -1);
-                textDirection.applyQuaternion(xrCamera.quaternion);
-                textGroup.position.add(textDirection.multiplyScalar(screenDistance + 0.5)); // 0.5 meters in front of screen
-                textGroup.position.y += 1; // 1 meter above screen
             }
         };
 
@@ -381,34 +344,13 @@ async function handleVRTransition() {
             // Clean up video and screen
             transitionVideo.pause();
             scene.remove(screenGroup);
-            scene.remove(textGroup);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
-            textGeometry.dispose();
-            textMaterial.dispose();
         });
 
-        // Load and play the video with proper error handling
+        // Load and play the video
         try {
-            // First, fetch the video as a blob
-            const response = await fetch('https://assets.nihaalnazeer.com/videos/exitvideo.mp4');
-            const blob = await response.blob();
-
-            // Convert blob to base64
-            const reader = new FileReader();
-            const base64Promise = new Promise((resolve, reject) => {
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-
-            // Get the base64 data URL
-            const base64DataUrl = await base64Promise;
-            
-            // Set the video source to the base64 data URL
-            transitionVideo.src = base64DataUrl;
-
             // Wait for video to be ready
             await new Promise((resolve, reject) => {
                 transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
@@ -433,14 +375,11 @@ async function handleVRTransition() {
                 // Store VR session state in localStorage
                 localStorage.setItem('vrSessionActive', 'true');
                 
-                // Remove screen and text before transition
+                // Remove screen before transition
                 scene.remove(screenGroup);
-                scene.remove(textGroup);
                 videoTexture.dispose();
                 videoScreen.geometry.dispose();
                 videoScreen.material.dispose();
-                textGeometry.dispose();
-                textMaterial.dispose();
                 
                 // Redirect to interactive world while maintaining VR session
                 window.location.href = "/interactive/index.html";
