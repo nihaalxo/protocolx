@@ -106,11 +106,13 @@ export class CharacterControls {
         if (controllers.length >= 2) {
             // Log controller details for debugging
             controllers.forEach((controller, index) => {
-                console.log(`Controller ${index}:`, {
-                    id: controller.id,
-                    axes: controller.axes,
-                    buttons: controller.buttons.map(b => b.pressed)
-                });
+                if (controller) {
+                    console.log(`Controller ${index}:`, {
+                        id: controller.id,
+                        axes: controller.axes,
+                        buttons: controller.buttons.map(b => b.pressed)
+                    });
+                }
             });
 
             // Assign controllers based on index (usually 0 is left, 1 is right)

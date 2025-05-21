@@ -16,6 +16,52 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 // Import our custom character controls (from TS)
 import { CharacterControls } from './characterControls';
 
+// Debug panel for Quest 2 controller input
+const debugPanel = document.createElement('pre');
+Object.assign(debugPanel.style, {
+    position: 'fixed',
+    bottom: '10px',
+    left: '10px',
+    width: '300px',
+    maxHeight: '40%',
+    overflowY: 'auto',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    color: '#0f0',
+    padding: '10px',
+    fontSize: '12px',
+    fontFamily: 'monospace',
+    zIndex: 9999,
+});
+document.body.appendChild(debugPanel);
+
+// Helper to dump anything
+function logDebug(msg) {
+    debugPanel.textContent += msg + '\n';
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+}
+
+// Log gamepadconnected
+window.addEventListener('gamepadconnected', e => {
+    logDebug(`[CONNECTED] index=${e.gamepad.index} id="${e.gamepad.id}"`);
+});
+
+// Log gamepaddisconnected
+window.addEventListener('gamepaddisconnected', e => {
+    logDebug(`[DISCONNECTED] index=${e.gamepad.index} id="${e.gamepad.id}"`);
+});
+
+// Poll every half-second for the first two controllers
+setInterval(() => {
+    const gps = navigator.getGamepads();
+    for (let i = 0; i < 2; i++) {
+        const gp = gps[i];
+        if (!gp) continue;
+        logDebug(`GP[${i}]: id="${gp.id}"
+  axes:[${gp.axes.map(a=>a.toFixed(2)).join(', ')}]
+  buttons:[${gp.buttons.map((b,idx)=> idx+':'+(b.pressed?1:0)).join(', ')}]`);
+    }
+}, 500);
+
 // -----------------------------------------------------------------
 // make every overlay button 58px tall, width auto
 // -----------------------------------------------------------------
