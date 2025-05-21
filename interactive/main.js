@@ -119,6 +119,23 @@ document.body.appendChild(renderer.domElement);
 // Initialize VR Manager
 const vrManager = new VRManager(renderer, scene, camera);
 
+// Check if we should start in VR mode
+if (localStorage.getItem('vrSessionActive') === 'true') {
+    // Clear the flag
+    localStorage.removeItem('vrSessionActive');
+    
+    // Start VR session
+    renderer.xr.enabled = true;
+    navigator.xr.requestSession('immersive-vr', {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['bounded-floor']
+    }).then(session => {
+        renderer.xr.setSession(session);
+    }).catch(error => {
+        console.error('Error starting VR session:', error);
+    });
+}
+
 // Initialize character controls
 let characterControls = new CharacterControls(camera, document.body);
 
