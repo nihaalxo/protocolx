@@ -1202,16 +1202,21 @@ function animate() {
     // Update VR manager
     vrManager.update();
 
-    // Update character controls only if not in VR mode
-    if (!vrManager.isVREnabled()) {
-        characterControls.update(delta, true);
+    // Update character controls
+    const velocity = characterControls.update(delta, true);
+
+    // Apply movement to camera
+    if (velocity) {
+        camera.position.x += velocity.x * delta;
+        camera.position.y += velocity.y * delta;
+        camera.position.z += velocity.z * delta;
     }
 
     composer.render();
+    requestAnimationFrame(animate);
 }
 
-// Replace requestAnimationFrame with setAnimationLoop
-renderer.setAnimationLoop(animate);
+animate();
 
 // -----------------------------------------------------------------
 // WINDOW RESIZE HANDLING

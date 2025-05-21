@@ -21,7 +21,6 @@ export class CharacterControls {
     private velocity: THREE.Vector3;
     private direction: THREE.Vector3;
     private prevTime: number;
-    private vrControls: any;
     private vrEnabled: boolean = false;
     private vrManager: any;
 
@@ -44,17 +43,14 @@ export class CharacterControls {
                 .then((supported) => {
                     if (supported) {
                         this.vrEnabled = true;
-                        this.setupVRControls();
+                        // Disable pointer lock controls when in VR
+                        this.controls.enabled = false;
                     }
                 })
                 .catch((error) => {
                     console.warn('WebXR not supported:', error);
                 });
         }
-    }
-
-    private setupVRControls() {
-        // VR controller setup is handled by VRManager
     }
 
     public update(delta: number, onGround: boolean): THREE.Vector3 {
@@ -124,30 +120,11 @@ export class CharacterControls {
         return this.velocity;
     }
 
-    public getControls(): PointerLockControls {
-        return this.controls;
-    }
-
-    public isVREnabled(): boolean {
-        return this.vrEnabled;
-    }
-
-    // VR-specific methods
-    public setVRControls(vrControls: any) {
-        this.vrControls = vrControls;
-    }
-
     public getVRPosition(): THREE.Vector3 {
-        if (this.vrControls) {
-            return this.vrControls.getPosition();
-        }
         return this.camera.position;
     }
 
     public getVRRotation(): THREE.Euler {
-        if (this.vrControls) {
-            return this.vrControls.getRotation();
-        }
         return this.camera.rotation;
     }
 }

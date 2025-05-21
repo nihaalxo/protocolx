@@ -79,34 +79,34 @@ export class VRManager {
     }
 
     private handleGamepadInput(gamepad: Gamepad, handedness: string) {
-        // Left controller (movement)
-        if (handedness === 'left') {
+        // Right controller (movement)
+        if (handedness === 'right') {
             // Thumbstick for movement
             const [x, y] = gamepad.axes;
             this.moveDirection.set(x, y);
-
-            // A button for interaction
-            if (gamepad.buttons[0].pressed) {
-                this.interactState = true;
-            } else {
-                this.interactState = false;
-            }
-        }
-
-        // Right controller (actions)
-        if (handedness === 'right') {
-            // X button for jumping
-            if (gamepad.buttons[3].pressed) {
-                this.jumpState = true;
-            } else {
-                this.jumpState = false;
-            }
 
             // Trigger for shooting
             if (gamepad.buttons[0].pressed) {
                 this.shootState = true;
             } else {
                 this.shootState = false;
+            }
+        }
+
+        // Left controller (actions)
+        if (handedness === 'left') {
+            // A button for interaction
+            if (gamepad.buttons[0].pressed) {
+                this.interactState = true;
+            } else {
+                this.interactState = false;
+            }
+
+            // X button for jumping
+            if (gamepad.buttons[3].pressed) {
+                this.jumpState = true;
+            } else {
+                this.jumpState = false;
             }
         }
     }

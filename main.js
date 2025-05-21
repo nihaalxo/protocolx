@@ -235,35 +235,50 @@ window.addEventListener("scroll", () => {
 // ================================================================
 let controller1, controller2;
 
-function onControllerSelectStart() {
-    handleVRTransition();
-}
+async function handleVRTransition() {
+    // Create video overlay for transition
+    const videoOverlay = document.createElement('div');
+    videoOverlay.style.position = 'fixed';
+    videoOverlay.style.top = '0';
+    videoOverlay.style.left = '0';
+    videoOverlay.style.width = '100%';
+    videoOverlay.style.height = '100%';
+    videoOverlay.style.backgroundColor = 'black';
+    videoOverlay.style.zIndex = '2000';
+    document.body.appendChild(videoOverlay);
 
-function setupVRControllers() {
-    controller1 = renderer.xr.getController(0);
-    controller2 = renderer.xr.getController(1);
-    
-    // Add gamepad polling for A button
-    const pollGamepads = () => {
-        const session = renderer.xr.getSession();
-        if (session) {
-            session.inputSources.forEach((inputSource) => {
-                const gamepad = inputSource.gamepad;
-                if (gamepad && inputSource.handedness === 'left' && gamepad.buttons[0].pressed) {
-                    handleVRTransition();
-                }
-            });
-        }
-        requestAnimationFrame(pollGamepads);
+    // Create video element
+    const transitionVideo = document.createElement('video');
+    transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
+    transitionVideo.style.width = '100vw';
+    transitionVideo.style.height = '100vh';
+    transitionVideo.style.objectFit = 'cover';
+    videoOverlay.appendChild(transitionVideo);
+
+    // Start VR session
+    renderer.xr.enabled = true;
+    const session = await navigator.xr.requestSession('immersive-vr');
+    renderer.xr.setSession(session);
+
+    // Play video
+    transitionVideo.play();
+
+    // Handle video end
+    transitionVideo.onended = () => {
+        // Keep VR enabled while transitioning
+        window.location.href = "/interactive/index.html";
     };
-    pollGamepads();
-    
-    scene.add(controller1);
-    scene.add(controller2);
 }
 
-function handleVRTransition() {
-    window.location.href = "/interactive/index.html";
-}
+// Add click handler to the button
+document.querySelector('.press-group').addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent default link behavior
+    handleVRTransition();
+});
 
-setupVRControllers();
+// Remove old F key listener
+// document.addEventListener("keydown", (event) => {
+//     if (event.code === "KeyF") {
+//         handleVRTransition();
+//     }
+// });
