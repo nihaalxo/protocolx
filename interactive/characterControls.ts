@@ -37,6 +37,11 @@ export class CharacterControls {
     headBobAmplitudeHorizontal = 0.05;
     headBobFrequency = 6;
 
+    // Gamepad state
+    private gamepadLoop: number | null = null;
+    private leftController: Gamepad | null = null;
+    private rightController: Gamepad | null = null;
+
     constructor(
         model: THREE.Group,
         mixer: THREE.AnimationMixer,
@@ -68,22 +73,78 @@ export class CharacterControls {
             return;
         }
 
-        // Poll for gamepad input
+        // Listen for gamepad connections
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log('Gamepad connected:', e.gamepad);
+            this.identifyControllers();
+        });
+
+        window.addEventListener('gamepaddisconnected', (e) => {
+            console.log('Gamepad disconnected:', e.gamepad);
+            if (this.gamepadLoop) {
+                cancelAnimationFrame(this.gamepadLoop);
+                this.gamepadLoop = null;
+            }
+            this.leftController = null;
+            this.rightController = null;
+        });
+
+        // Initial controller identification
+        this.identifyControllers();
+    }
+
+    private identifyControllers() {
+        const gamepads = navigator.getGamepads();
+        if (!gamepads) return;
+
+        // Find Oculus Touch controllers
+        const controllers = Array.from(gamepads).filter(g => g && (
+            g.id.includes('Oculus Touch') || 
+            g.id.includes('oculus-touch-v3')
+        ));
+
+        if (controllers.length >= 2) {
+            // Log controller details for debugging
+            controllers.forEach((controller, index) => {
+                console.log(`Controller ${index}:`, {
+                    id: controller.id,
+                    axes: controller.axes,
+                    buttons: controller.buttons.map(b => b.pressed)
+                });
+            });
+
+            // Assign controllers based on index (usually 0 is left, 1 is right)
+            this.leftController = controllers[0];
+            this.rightController = controllers[1];
+
+            // Start polling if not already running
+            if (!this.gamepadLoop) {
+                this.startGamepadPolling();
+            }
+        }
+    }
+
+    private startGamepadPolling() {
         const pollGamepads = () => {
+            if (!this.leftController || !this.rightController) {
+                this.gamepadLoop = null;
+                return;
+            }
+
+            // Update controller references
             const gamepads = navigator.getGamepads();
-            if (!gamepads) return;
+            if (gamepads) {
+                this.leftController = gamepads[this.leftController.index];
+                this.rightController = gamepads[this.rightController.index];
+            }
 
-            // Find Quest 2 controllers
-            const leftController = Array.from(gamepads).find(g => g?.id.includes('Quest 2') && g?.buttons.length > 0 && g?.axes.length > 0);
-            const rightController = Array.from(gamepads).find(g => g?.id.includes('Quest 2') && g?.id !== leftController?.id);
+            if (this.leftController) {
+                // Left stick for mouse movement (axes 0,1)
+                this.leftStickX = this.leftController.axes[0];
+                this.leftStickY = this.leftController.axes[1];
 
-            if (leftController) {
-                // Left stick for mouse movement
-                this.leftStickX = leftController.axes[0];
-                this.leftStickY = leftController.axes[1];
-                
-                // Map B button to F key (changed from A button)
-                if (leftController.buttons[1].pressed) {
+                // Map A button to F key (button 4 on Oculus Touch)
+                if (this.leftController.buttons[4].pressed) {
                     const event = new KeyboardEvent('keydown', { key: 'f' });
                     document.dispatchEvent(event);
                 } else {
@@ -91,8 +152,8 @@ export class CharacterControls {
                     document.dispatchEvent(event);
                 }
 
-                // Map X button to space bar
-                if (leftController.buttons[2].pressed) {
+                // Map X button to space bar (button 6 on Oculus Touch)
+                if (this.leftController.buttons[6].pressed) {
                     const event = new KeyboardEvent('keydown', { key: ' ' });
                     document.dispatchEvent(event);
                 } else {
@@ -101,31 +162,33 @@ export class CharacterControls {
                 }
             }
 
-            if (rightController) {
-                // Right stick for WASD movement
-                this.rightStickX = rightController.axes[0];
-                this.rightStickY = rightController.axes[1];
-                
-                // Right trigger for shooting
-                this.isShooting = rightController.buttons[0].pressed;
+            if (this.rightController) {
+                // Right stick for WASD movement (axes 2,3)
+                this.rightStickX = this.rightController.axes[2];
+                this.rightStickY = this.rightController.axes[3];
+
+                // Right trigger for shooting (button 5 on Oculus Touch)
+                this.isShooting = this.rightController.buttons[5].pressed;
             }
 
-            requestAnimationFrame(pollGamepads);
+            this.gamepadLoop = requestAnimationFrame(pollGamepads);
         };
 
-        // Start polling
-        pollGamepads();
+        this.gamepadLoop = requestAnimationFrame(pollGamepads);
     }
 
     public update(delta: number, keysPressed: any, shooting: boolean) {
+        // Update head bob timer
+        this.headBobTimer += delta;
+
         // Map controller inputs to keyboard/mouse inputs
         if (Math.abs(this.leftStickX) > 0.1 || Math.abs(this.leftStickY) > 0.1) {
-            // Simulate mouse movement
+            // Simulate mouse movement on the renderer's canvas
             const event = new MouseEvent('mousemove', {
                 clientX: window.innerWidth / 2 + this.leftStickX * 100,
                 clientY: window.innerHeight / 2 + this.leftStickY * 100
             });
-            document.dispatchEvent(event);
+            document.querySelector('canvas')?.dispatchEvent(event);
         }
 
         // Map right stick to WASD keys
@@ -151,7 +214,7 @@ export class CharacterControls {
             keysPressed.set(D, false);
         }
 
-        // Map right trigger to shooting
+        // Update shooting state
         if (this.isShooting) {
             shooting = true;
         }
