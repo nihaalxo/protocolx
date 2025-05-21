@@ -230,10 +230,32 @@ window.addEventListener("scroll", () => {
 });
 
 // ================================================================
-// Keydown Event to Redirect on "F" Key Press
+// Input Handling for both Keyboard and Gamepad
 // ================================================================
+// Handle keyboard F key
 document.addEventListener("keydown", (event) => {
   if (event.code === "KeyF") {
     window.location.href = "/interactive/index.html";
   }
 });
+
+// Handle gamepad A button (button 0)
+function checkGamepadInput() {
+  const gamepads = navigator.getGamepads();
+  if (!gamepads) return;
+
+  // Check all connected gamepads
+  for (const gamepad of gamepads) {
+    if (gamepad && gamepad.mapping === 'standard') {
+      // Check if A button (button 0) is pressed
+      if (gamepad.buttons[0].pressed) {
+        window.location.href = "/interactive/index.html";
+        return; // Exit after handling the press
+      }
+    }
+  }
+  requestAnimationFrame(checkGamepadInput);
+}
+
+// Start checking for gamepad input
+checkGamepadInput();

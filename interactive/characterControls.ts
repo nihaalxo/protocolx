@@ -16,13 +16,17 @@ export class CharacterControls {
     walkDirection = new THREE.Vector3();
     rotateAngle = new THREE.Vector3(0, 1, 0);
     rotateQuaternion: THREE.Quaternion = new THREE.Quaternion();
-    isShooting: boolean = false;
+    private isShooting: boolean = false;
+    private isJumping: boolean = false;
+    private jumpVelocity: number = 0;
+    private jumpForce: number = 10;
+    private headBobTimer: number = 0;
 
     // controller input
-    leftStickX: number = 0;
-    leftStickY: number = 0;
-    rightStickX: number = 0;
-    rightStickY: number = 0;
+    private leftStickX: number = 0;
+    private leftStickY: number = 0;
+    private rightStickX: number = 0;
+    private rightStickY: number = 0;
 
     // constants and settings
     fadeDuration: number = 0.2;
@@ -30,9 +34,9 @@ export class CharacterControls {
     headHeight = 2.85;
     forwardOffset = -0.25;
     lookSensitivity = 0.1; // Adjust this to control look speed
+    private deadzone = 0.1; // Deadzone for analog sticks
 
     // Head bobbing settings
-    headBobTimer = 0;
     headBobAmplitudeVertical = 0.05;
     headBobAmplitudeHorizontal = 0.05;
     headBobFrequency = 6;
@@ -61,6 +65,21 @@ export class CharacterControls {
                 value.play();
             }
         });
+
+        // Prevent unwanted pointer events from gamepad
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            canvas.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'gamepad') {
+                    e.preventDefault();
+                }
+            });
+            canvas.addEventListener('pointerup', (e) => {
+                if (e.pointerType === 'gamepad') {
+                    e.preventDefault();
+                }
+            });
+        }
 
         // Set up gamepad input
         this.setupGamepadInput();
@@ -139,35 +158,41 @@ export class CharacterControls {
             }
 
             if (this.leftController && this.leftController.mapping === 'standard') {
-                // Left stick for looking around (axes 0,1)
-                this.leftStickX = this.leftController.axes[0];
-                this.leftStickY = this.leftController.axes[1];
+                // Apply deadzone to left stick
+                const leftX = Math.abs(this.leftController.axes[0]) > this.deadzone ? this.leftController.axes[0] : 0;
+                const leftY = Math.abs(this.leftController.axes[1]) > this.deadzone ? this.leftController.axes[1] : 0;
+                
+                // Apply look sensitivity
+                this.leftStickX = leftX * this.lookSensitivity;
+                this.leftStickY = leftY * this.lookSensitivity;
 
-                // Map A button to F key (button 0 on standard mapping)
+                // Map A button to F key interactions (button 0)
                 if (this.leftController.buttons[0].pressed) {
-                    const event = new KeyboardEvent('keydown', { key: 'f' });
-                    document.dispatchEvent(event);
-                } else {
-                    const event = new KeyboardEvent('keyup', { key: 'f' });
-                    document.dispatchEvent(event);
+                    // Trigger F key interaction directly
+                    if (window.handleFKeyInteraction) {
+                        window.handleFKeyInteraction();
+                    }
                 }
 
-                // Map X button to space bar (button 2 on standard mapping)
+                // Map X button to jump (button 2)
                 if (this.leftController.buttons[2].pressed) {
-                    const event = new KeyboardEvent('keydown', { key: ' ' });
-                    document.dispatchEvent(event);
-                } else {
-                    const event = new KeyboardEvent('keyup', { key: ' ' });
-                    document.dispatchEvent(event);
+                    // Trigger jump directly
+                    if (!this.isJumping) {
+                        this.isJumping = true;
+                        this.jumpVelocity = this.jumpForce;
+                    }
                 }
             }
 
             if (this.rightController && this.rightController.mapping === 'standard') {
-                // Right stick for WASD movement (axes 2,3)
-                this.rightStickX = this.rightController.axes[2];
-                this.rightStickY = this.rightController.axes[3];
+                // Apply deadzone to right stick
+                const rightX = Math.abs(this.rightController.axes[2]) > this.deadzone ? this.rightController.axes[2] : 0;
+                const rightY = Math.abs(this.rightController.axes[3]) > this.deadzone ? this.rightController.axes[3] : 0;
+                
+                this.rightStickX = rightX;
+                this.rightStickY = rightY;
 
-                // Right trigger for shooting (button 7 on standard mapping)
+                // Right trigger for shooting (button 7)
                 this.isShooting = this.rightController.buttons[7].pressed;
             }
 
@@ -299,5 +324,12 @@ export class CharacterControls {
             .add(new THREE.Vector3(right.x, bobOffsetY, right.z));
 
         this.camera.position.copy(finalPos);
+    }
+}
+
+// Add type declaration for window.handleFKeyInteraction
+declare global {
+    interface Window {
+        handleFKeyInteraction?: () => void;
     }
 }

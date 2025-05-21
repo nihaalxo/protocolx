@@ -140,6 +140,20 @@ style.textContent = `
     bottom: 20px;
     right: 20px;
   }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    height: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;    /* disable pointer-based panning/zooming */
+  }
 `;
 document.head.appendChild(style);
 
@@ -1363,3 +1377,10 @@ function handleFKeyInteraction() {
 
 // Add click handler for the button
 fKeyButton.addEventListener('click', handleFKeyInteraction);
+
+document.addEventListener("keydown", (event) => {
+  // Handle both F key and gamepad A button (which sends 'a' key)
+  if (event.code === "KeyF" || event.code === "KeyA") {
+    window.location.href = "/interactive/index.html";
+  }
+});
