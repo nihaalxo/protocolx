@@ -82,8 +82,8 @@ export class CharacterControls {
                 this.leftStickX = leftController.axes[0];
                 this.leftStickY = leftController.axes[1];
                 
-                // Map A button to F key
-                if (leftController.buttons[0].pressed) {
+                // Map B button to F key (changed from A button)
+                if (leftController.buttons[1].pressed) {
                     const event = new KeyboardEvent('keydown', { key: 'f' });
                     document.dispatchEvent(event);
                 } else {
