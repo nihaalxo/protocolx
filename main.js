@@ -251,6 +251,9 @@ const testCube = new THREE.Mesh(cubeGeo, cubeMat);
 testCube.position.set(0, 1.6, -2); // 2m in front of the user's eye height
 scene.add(testCube);
 
+// Add VRButton for debugging
+document.body.appendChild(VRButton.createButton(renderer));
+
 // Set up the XR render loop
 renderer.setAnimationLoop(function renderLoop(time, xrFrame) {
     const delta = clock.getDelta();
@@ -272,24 +275,66 @@ renderer.setAnimationLoop(function renderLoop(time, xrFrame) {
     composer.render();
 });
 
+// Function to load the interactive room
+async function loadInteractiveRoomInPlace() {
+    try {
+        // Load the interactive room model
+        const loader = new GLTFLoader();
+        const gltf = await loader.loadAsync('https://assets.nihaalnazeer.com/models/interactive_room.glb');
+        
+        // Add the room to the scene
+        scene.add(gltf.scene);
+        
+        // Set up room lighting and environment
+        const roomLight = new THREE.DirectionalLight(0xffffff, 1);
+        roomLight.position.set(0, 5, 0);
+        scene.add(roomLight);
+        
+        // Add ambient light
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+        
+        // Set up room interactions
+        setupRoomInteractions(gltf.scene);
+        
+    } catch (error) {
+        console.error('Error loading interactive room:', error);
+    }
+}
+
+// Function to set up room interactions
+function setupRoomInteractions(room) {
+    // Add your interactive elements here
+    // This could include clickable objects, animations, etc.
+}
+
 // Modify the handleVRTransition function
 async function handleVRTransition() {
+    if (!navigator.xr) {
+        console.error('WebXR not supported by this browser');
+        return;
+    }
+
     try {
-        // First, request VR session
+        // Request VR session
         const session = await navigator.xr.requestSession('immersive-vr', {
             requiredFeatures: ['local-floor'],
             optionalFeatures: ['bounded-floor']
         });
 
-        // Set the XR session immediately
+        // Set up XR session
+        renderer.xr.setReferenceSpaceType('local-floor');
         renderer.xr.setSession(session);
 
-        // Wait for the session to be fully established
-        await new Promise(resolve => {
-            session.addEventListener('sessionstart', resolve, { once: true });
-        });
+        // Add test cube
+        const probe = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.5, 0.5),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+        probe.position.set(0, 1.6, -2);
+        scene.add(probe);
 
-        // Create and play the video element
+        // Create and play the video
         const transitionVideo = document.createElement('video');
         transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
         transitionVideo.crossOrigin = 'anonymous';
@@ -298,15 +343,14 @@ async function handleVRTransition() {
         transitionVideo.volume = 1.0;
         transitionVideo.preload = 'auto';
 
-        // Create a video texture
+        // Create video texture and screen
         const videoTexture = new THREE.VideoTexture(transitionVideo);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBFormat;
 
-        // Create a large screen in VR space
-        const screenWidth = 4; // 4 meters wide
-        const screenHeight = screenWidth * (9/16); // Maintain 16:9 aspect ratio
+        const screenWidth = 4;
+        const screenHeight = screenWidth * (9/16);
         const videoScreen = new THREE.Mesh(
             new THREE.PlaneGeometry(screenWidth, screenHeight),
             new THREE.MeshBasicMaterial({
@@ -321,44 +365,45 @@ async function handleVRTransition() {
         screenGroup.add(videoScreen);
         scene.add(screenGroup);
 
-        // Function to update positions in VR
-        const updatePositions = () => {
+        // Function to update screen position
+        const updateScreenPosition = () => {
             if (renderer.xr.isPresenting) {
-                // Get the current XR camera
                 const xrCamera = renderer.xr.getCamera(camera);
-                
-                // Position the screen in front of the camera
-                const screenDistance = 3; // 3 meters in front
                 screenGroup.position.copy(xrCamera.position);
                 screenGroup.quaternion.copy(xrCamera.quaternion);
                 
-                // Move the screen forward in the direction the camera is facing
                 const screenDirection = new THREE.Vector3(0, 0, -1);
                 screenDirection.applyQuaternion(xrCamera.quaternion);
-                screenGroup.position.add(screenDirection.multiplyScalar(screenDistance));
+                screenGroup.position.add(screenDirection.multiplyScalar(3));
             }
         };
 
-        // Handle VR session end
+        // Add screen position update to render loop
+        const originalRenderLoop = renderer.getAnimationLoop();
+        renderer.setAnimationLoop((time, xrFrame) => {
+            originalRenderLoop(time, xrFrame);
+            updateScreenPosition();
+        });
+
+        // Handle session end
         session.addEventListener('end', () => {
-            // Clean up video and screen
             transitionVideo.pause();
             scene.remove(screenGroup);
+            scene.remove(probe);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
+            renderer.setAnimationLoop(originalRenderLoop);
         });
 
         // Load and play the video
         try {
-            // Wait for video to be ready
             await new Promise((resolve, reject) => {
                 transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
                 transitionVideo.addEventListener('error', reject, { once: true });
                 transitionVideo.load();
             });
 
-            // Ensure audio context is running
             if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 const audioContext = new AudioContextClass();
@@ -367,22 +412,19 @@ async function handleVRTransition() {
                 }
             }
 
-            // Play the video
             await transitionVideo.play();
 
             // Handle video end
             transitionVideo.onended = () => {
-                // Store VR session state in localStorage
-                localStorage.setItem('vrSessionActive', 'true');
-                
-                // Remove screen before transition
+                // Remove video screen and probe
                 scene.remove(screenGroup);
+                scene.remove(probe);
                 videoTexture.dispose();
                 videoScreen.geometry.dispose();
                 videoScreen.material.dispose();
                 
-                // Redirect to interactive world while maintaining VR session
-                window.location.href = "/interactive/index.html";
+                // Load interactive room in place
+                loadInteractiveRoomInPlace();
             };
 
         } catch (error) {
@@ -409,7 +451,7 @@ async function handleVRTransition() {
 
             fallbackVideo.play();
             fallbackVideo.onended = () => {
-                window.location.href = "/interactive/index.html";
+                loadInteractiveRoomInPlace();
             };
         }
 
@@ -437,7 +479,7 @@ async function handleVRTransition() {
 
         transitionVideo.play();
         transitionVideo.onended = () => {
-            window.location.href = "/interactive/index.html";
+            loadInteractiveRoomInPlace();
         };
     }
 }
