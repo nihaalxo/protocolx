@@ -10,6 +10,8 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // ================================================================
 // Parameters for bloom and tone mapping
@@ -256,17 +258,40 @@ async function handleVRTransition() {
             renderer.xr.setSession(session);
         });
 
-        // Create video element with proper audio setup
+        // Load font and create text mesh
+        const fontLoader = new FontLoader();
+        const font = await new Promise((resolve, reject) => {
+            fontLoader.load(
+                'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+                resolve,
+                undefined,
+                reject
+            );
+        });
+
+        // Create a text mesh to verify VR rendering
+        const textGeometry = new TextGeometry('VR Test Text', {
+            font: font,
+            size: 0.2,
+            height: 0.05,
+        });
+        textGeometry.center(); // Center the text
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        
+        // Create a group for the text
+        const textGroup = new THREE.Group();
+        textGroup.add(textMesh);
+        scene.add(textGroup);
+
+        // Create a video element
         const transitionVideo = document.createElement('video');
-        transitionVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
-        transitionVideo.loop = false;
         transitionVideo.muted = false;
         transitionVideo.playsInline = true;
-        transitionVideo.crossOrigin = 'anonymous';
-        transitionVideo.volume = 1.0; // Ensure full volume
-        transitionVideo.preload = 'auto'; // Preload the video
+        transitionVideo.volume = 1.0;
+        transitionVideo.preload = 'auto';
 
-        // Create video texture
+        // Create a video texture
         const videoTexture = new THREE.VideoTexture(transitionVideo);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
@@ -289,21 +314,31 @@ async function handleVRTransition() {
         screenGroup.add(videoScreen);
         scene.add(screenGroup);
 
-        // Function to update screen position in VR
-        const updateScreenPosition = () => {
+        // Function to update positions in VR
+        const updatePositions = () => {
             if (renderer.xr.isPresenting) {
                 // Get the current XR camera
                 const xrCamera = renderer.xr.getCamera(camera);
                 
                 // Position the screen in front of the camera
-                const distance = 3; // 3 meters in front
+                const screenDistance = 3; // 3 meters in front
                 screenGroup.position.copy(xrCamera.position);
                 screenGroup.quaternion.copy(xrCamera.quaternion);
                 
                 // Move the screen forward in the direction the camera is facing
-                const direction = new THREE.Vector3(0, 0, -1);
-                direction.applyQuaternion(xrCamera.quaternion);
-                screenGroup.position.add(direction.multiplyScalar(distance));
+                const screenDirection = new THREE.Vector3(0, 0, -1);
+                screenDirection.applyQuaternion(xrCamera.quaternion);
+                screenGroup.position.add(screenDirection.multiplyScalar(screenDistance));
+
+                // Position the text slightly above the screen
+                textGroup.position.copy(xrCamera.position);
+                textGroup.quaternion.copy(xrCamera.quaternion);
+                
+                // Move the text forward and up
+                const textDirection = new THREE.Vector3(0, 0, -1);
+                textDirection.applyQuaternion(xrCamera.quaternion);
+                textGroup.position.add(textDirection.multiplyScalar(screenDistance + 0.5)); // 0.5 meters in front of screen
+                textGroup.position.y += 1; // 1 meter above screen
             }
         };
 
@@ -311,7 +346,7 @@ async function handleVRTransition() {
         const originalAnimate = animate;
         animate = function() {
             originalAnimate();
-            updateScreenPosition();
+            updatePositions();
         };
 
         // Handle VR session end
@@ -319,53 +354,103 @@ async function handleVRTransition() {
             // Clean up video and screen
             transitionVideo.pause();
             scene.remove(screenGroup);
+            scene.remove(textGroup);
             videoTexture.dispose();
             videoScreen.geometry.dispose();
             videoScreen.material.dispose();
+            textGeometry.dispose();
+            textMaterial.dispose();
             // Restore original animate function
             animate = originalAnimate;
         });
 
-        // Wait for video to be ready and play with audio
-        await new Promise((resolve) => {
-            transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
-            transitionVideo.load();
-        });
-
-        // Ensure audio context is running (required for some browsers)
-        if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            const audioContext = new AudioContextClass();
-            if (audioContext.state === 'suspended') {
-                await audioContext.resume();
-            }
-        }
-
-        // Play video with audio
+        // Load and play the video with proper error handling
         try {
-            await transitionVideo.play();
-        } catch (error) {
-            console.error('Error playing video:', error);
-            // If autoplay fails, try playing after user interaction
-            document.addEventListener('click', () => {
-                transitionVideo.play();
-            }, { once: true });
-        }
+            // First, fetch the video as a blob
+            const response = await fetch('https://assets.nihaalnazeer.com/videos/exitvideo.mp4');
+            const blob = await response.blob();
 
-        // Handle video end
-        transitionVideo.onended = () => {
-            // Store VR session state in localStorage
-            localStorage.setItem('vrSessionActive', 'true');
-            // Remove screen before transition
-            scene.remove(screenGroup);
-            videoTexture.dispose();
-            videoScreen.geometry.dispose();
-            videoScreen.material.dispose();
-            // Restore original animate function
-            animate = originalAnimate;
-            // Redirect to interactive world while maintaining VR session
-            window.location.href = "/interactive/index.html";
-        };
+            // Convert blob to base64
+            const reader = new FileReader();
+            const base64Promise = new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+
+            // Get the base64 data URL
+            const base64DataUrl = await base64Promise;
+            
+            // Set the video source to the base64 data URL
+            transitionVideo.src = base64DataUrl;
+
+            // Wait for video to be ready
+            await new Promise((resolve, reject) => {
+                transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
+                transitionVideo.addEventListener('error', reject, { once: true });
+                transitionVideo.load();
+            });
+
+            // Ensure audio context is running
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContextClass();
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+            }
+
+            // Play the video
+            await transitionVideo.play();
+
+            // Handle video end
+            transitionVideo.onended = () => {
+                // Store VR session state in localStorage
+                localStorage.setItem('vrSessionActive', 'true');
+                
+                // Remove screen and text before transition
+                scene.remove(screenGroup);
+                scene.remove(textGroup);
+                videoTexture.dispose();
+                videoScreen.geometry.dispose();
+                videoScreen.material.dispose();
+                textGeometry.dispose();
+                textMaterial.dispose();
+                
+                // Restore original animate function
+                animate = originalAnimate;
+                
+                // Redirect to interactive world while maintaining VR session
+                window.location.href = "/interactive/index.html";
+            };
+
+        } catch (error) {
+            console.error('Error loading or playing video:', error);
+            // If video fails, fall back to normal transition
+            const videoOverlay = document.createElement('div');
+            videoOverlay.style.position = 'fixed';
+            videoOverlay.style.top = '0';
+            videoOverlay.style.left = '0';
+            videoOverlay.style.width = '100%';
+            videoOverlay.style.height = '100%';
+            videoOverlay.style.backgroundColor = 'black';
+            videoOverlay.style.zIndex = '2000';
+            document.body.appendChild(videoOverlay);
+
+            const fallbackVideo = document.createElement('video');
+            fallbackVideo.src = 'https://assets.nihaalnazeer.com/videos/exitvideo.mp4';
+            fallbackVideo.style.width = '100vw';
+            fallbackVideo.style.height = '100vh';
+            fallbackVideo.style.objectFit = 'cover';
+            fallbackVideo.muted = false;
+            fallbackVideo.volume = 1.0;
+            videoOverlay.appendChild(fallbackVideo);
+
+            fallbackVideo.play();
+            fallbackVideo.onended = () => {
+                window.location.href = "/interactive/index.html";
+            };
+        }
 
     } catch (error) {
         console.error('Error starting VR session:', error);
