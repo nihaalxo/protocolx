@@ -32,6 +32,9 @@ renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.toneMappingExposure = params.exposure;
 container.appendChild(renderer.domElement);
 
+// Add VR setup at the beginning of the file, after renderer initialization
+renderer.xr.enabled = true;
+
 const scene = new THREE.Scene();
 // Leave scene.background black to let the HDRI primarily affect lighting.
 scene.background = new THREE.Color(0x000000);
@@ -235,15 +238,23 @@ window.addEventListener("scroll", () => {
 // ================================================================
 let controller1, controller2;
 
+// Add VR camera setup
+const vrCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+vrCamera.position.set(0, 1.6, 0); // Set initial position at eye level
+
 async function handleVRTransition() {
     try {
         // First, request VR session
-        renderer.xr.enabled = true;
         const session = await navigator.xr.requestSession('immersive-vr', {
             requiredFeatures: ['local-floor'],
             optionalFeatures: ['bounded-floor']
         });
-        renderer.xr.setSession(session);
+
+        // Wait for the session to be fully established
+        await new Promise(resolve => {
+            session.addEventListener('sessionstart', resolve, { once: true });
+            renderer.xr.setSession(session);
+        });
 
         // Create video element
         const transitionVideo = document.createElement('video');
@@ -261,7 +272,7 @@ async function handleVRTransition() {
 
         // Create a full-screen quad that follows the camera
         const videoQuad = new THREE.Mesh(
-            new THREE.PlaneGeometry(2, 2),
+            new THREE.PlaneGeometry(16, 9), // 16:9 aspect ratio
             new THREE.MeshBasicMaterial({
                 map: videoTexture,
                 side: THREE.DoubleSide,
@@ -277,23 +288,18 @@ async function handleVRTransition() {
         // Update function to keep video in front of camera
         const updateVideoPosition = () => {
             if (renderer.xr.isPresenting) {
-                // Get the current camera position and rotation
-                const cameraPosition = new THREE.Vector3();
-                const cameraQuaternion = new THREE.Quaternion();
-                const cameraMatrix = new THREE.Matrix4();
-                
-                // Get the current XR camera matrix
+                // Get the current XR camera
                 const xrCamera = renderer.xr.getCamera(camera);
-                xrCamera.getWorldPosition(cameraPosition);
-                xrCamera.getWorldQuaternion(cameraQuaternion);
                 
-                // Position the video group slightly in front of the camera
+                // Position the video group in front of the camera
                 const distance = 2; // 2 meters in front
-                const direction = new THREE.Vector3(0, 0, -1);
-                direction.applyQuaternion(cameraQuaternion);
+                videoGroup.position.copy(xrCamera.position);
+                videoGroup.quaternion.copy(xrCamera.quaternion);
                 
-                videoGroup.position.copy(cameraPosition).add(direction.multiplyScalar(distance));
-                videoGroup.quaternion.copy(cameraQuaternion);
+                // Move the video forward in the direction the camera is facing
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(xrCamera.quaternion);
+                videoGroup.position.add(direction.multiplyScalar(distance));
             }
         };
 
@@ -316,7 +322,13 @@ async function handleVRTransition() {
             animate = originalAnimate;
         });
 
-        // Play video
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+            transitionVideo.addEventListener('canplaythrough', resolve, { once: true });
+            transitionVideo.load();
+        });
+
+        // Play video only after VR session is established
         await transitionVideo.play();
 
         // Handle video end
@@ -367,9 +379,9 @@ document.querySelector('.press-group').addEventListener('click', (e) => {
     handleVRTransition();
 });
 
-// Remove old F key listener
-// document.addEventListener("keydown", (event) => {
-//     if (event.code === "KeyF") {
-//         handleVRTransition();
-//     }
-// });
+// Add F key handler
+document.addEventListener("keydown", (event) => {
+    if (event.code === "KeyF") {
+        handleVRTransition();
+    }
+});
