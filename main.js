@@ -9,6 +9,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
 // ================================================================
 // Parameters for bloom and tone mapping
@@ -237,3 +238,39 @@ document.addEventListener("keydown", (event) => {
     window.location.href = "/interactive/index.html";
   }
 });
+
+// Add VR support
+renderer.xr.enabled = true;
+document.body.appendChild(VRButton.createButton(renderer));
+
+// Modify the keydown event to work with VR controllers
+function handleVRTransition() {
+    window.location.href = "/interactive/index.html";
+}
+
+// Keep keyboard support for development
+document.addEventListener("keydown", (event) => {
+    if (event.code === "KeyF") {
+        handleVRTransition();
+    }
+});
+
+// Add VR controller support
+let controller1, controller2;
+
+function onControllerSelectStart() {
+    handleVRTransition();
+}
+
+function setupVRControllers() {
+    controller1 = renderer.xr.getController(0);
+    controller2 = renderer.xr.getController(1);
+    
+    controller1.addEventListener('selectstart', onControllerSelectStart);
+    controller2.addEventListener('selectstart', onControllerSelectStart);
+    
+    scene.add(controller1);
+    scene.add(controller2);
+}
+
+setupVRControllers();

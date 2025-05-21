@@ -12,6 +12,8 @@
     "vite-plugin-wasm": "^3.4.1"
   },
   "dependencies": {
-    "three": "^0.175.0"
+    "three": "^0.175.0",
+    "@webxr-input-profiles/motion-controllers": "^1.0.0",
+    "webxr-polyfill": "^2.0.3"
   }
 }

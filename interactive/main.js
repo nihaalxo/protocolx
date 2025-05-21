@@ -13,6 +13,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 // Import our custom character controls (from TS)
 import { CharacterControls } from './characterControls';
+import { VRManager } from './VRManager';
 
 // -----------------------------------------------------------------
 // make every overlay button 58px tall, width auto
@@ -101,14 +102,12 @@ document.head.appendChild(style);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xa8def0);
 
-// Update: set near clipping to 0.01
 const camera = new THREE.PerspectiveCamera(
-  57.5,
-  window.innerWidth / window.innerHeight,
-  0.01,  // Near clipping set to 0.01
-  3000
+    57.5,
+    window.innerWidth / window.innerHeight,
+    0.01,
+    3000
 );
-// Initial position (later updated relative to the player)
 camera.position.set(0, 3, 3);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -116,6 +115,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
+
+// Initialize VR Manager
+const vrManager = new VRManager(renderer, scene, camera);
+
+// Initialize character controls
+let characterControls = new CharacterControls(camera, document.body);
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -162,46 +167,23 @@ loader.load(
     scene.add(gltf.scene);
 
     gltf.scene.traverse(child => {
-      if (child.isMesh && screenNames.includes(child.name)) {
-        // 1) make <video> element
-        const vid = document.createElement('video');
-        vid.src         = videoFiles[child.name];
-        vid.loop        = true;
-        vid.muted       = true;
-        vid.playsInline = true;
-        vid.crossOrigin = 'anonymous';
-
-        // try to play ASAP
-        vid.addEventListener('loadedmetadata', () => {
-          vid.play().catch(e => console.warn('Video play error:', e));
-        });
-        if (vid.readyState >= vid.HAVE_METADATA) {
-          vid.play().catch(e => console.warn('Video play error:', e));
+      if (child.isMesh) {
+        // Add VR interaction properties to buttons and interactive elements
+        if (child.name.includes('button') || child.name.includes('interactive')) {
+          child.userData.interactive = true;
+          child.userData.type = 'button';
+          // Add action based on the button type
+          if (child.name.includes('sit')) {
+            child.userData.action = () => handleSitButton();
+          } else if (child.name.includes('exit')) {
+            child.userData.action = () => handleExitButton();
+          }
         }
 
-        // 2) create VideoTexture
-        const videoTex = new THREE.VideoTexture(vid);
-        videoTex.minFilter = THREE.LinearFilter;
-        videoTex.magFilter = THREE.LinearFilter;
-        videoTex.format    = THREE.RGBFormat;
-        videoTex.encoding  = THREE.sRGBEncoding;
-
-        // Try first approach: simple flip
-        videoTex.flipY = false;
-
-        // If that doesn't work, uncomment this alternative approach:
-        // videoTex.center = new THREE.Vector2(0.5, 0.5);
-        // videoTex.rotation = Math.PI;
-        // videoTex.flipY = true;
-
-        // 3) swap into the mesh's material
-        const mat = child.material;
-        mat.map = videoTex;
-        mat.needsUpdate = true;
-        // ensure full opacity
-        mat.transparent = false;
-
-        // 4) the video texture will update each frame by default
+        // Handle video screens
+        if (screenNames.includes(child.name)) {
+          setupVideoScreen(child, videoFiles[child.name]);
+        }
       }
     });
 
@@ -322,8 +304,6 @@ document.addEventListener('click', () => {
 // -----------------------------------------------------------------
 // CHARACTER MODEL & CONTROLS
 // -----------------------------------------------------------------
-let characterControls = null;
-
 loader.load(
   'https://assets.nihaalnazeer.com/models/player.glb',
   (gltf) => {
@@ -1217,16 +1197,21 @@ document.addEventListener('mouseup', (event) => {
 const clock = new THREE.Clock();
 
 function animate() {
-  requestAnimationFrame(animate);
-  const delta = clock.getDelta();
+    const delta = clock.getDelta();
+    
+    // Update VR manager
+    vrManager.update();
 
-  if (characterControls) {
-    characterControls.update(delta, keysPressed, shooting);
-  }
-  composer.render(delta);
+    // Update character controls only if not in VR mode
+    if (!vrManager.isVREnabled()) {
+        characterControls.update(delta, true);
+    }
+
+    composer.render();
 }
 
-animate();
+// Replace requestAnimationFrame with setAnimationLoop
+renderer.setAnimationLoop(animate);
 
 // -----------------------------------------------------------------
 // WINDOW RESIZE HANDLING
@@ -1266,3 +1251,46 @@ videoEl.addEventListener("ended", () => {
   document.getElementById("video-overlay").style.display = "none";
   window.dispatchEvent(new Event("resize"));
 });
+
+// -----------------------------------------------------------------
+// Video Screen Setup
+// -----------------------------------------------------------------
+function setupVideoScreen(mesh, videoUrl) {
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+
+    video.addEventListener('loadedmetadata', () => {
+        video.play().catch(e => console.warn('Video play error:', e));
+    });
+
+    const videoTexture = new THREE.VideoTexture(video);
+    videoTexture.minFilter = THREE.LinearFilter;
+    videoTexture.magFilter = THREE.LinearFilter;
+    videoTexture.format = THREE.RGBFormat;
+    videoTexture.encoding = THREE.sRGBEncoding;
+    videoTexture.flipY = false;
+
+    mesh.material.map = videoTexture;
+    mesh.material.needsUpdate = true;
+}
+
+// -----------------------------------------------------------------
+// VR Interaction Handlers
+// -----------------------------------------------------------------
+function handleSitButton() {
+    // Handle sit button interaction in VR
+    if (vrManager.isVREnabled()) {
+        // Implement VR-specific sitting interaction
+    }
+}
+
+function handleExitButton() {
+    // Handle exit button interaction in VR
+    if (vrManager.isVREnabled()) {
+        // Implement VR-specific exit interaction
+    }
+}
