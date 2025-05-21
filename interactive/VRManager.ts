@@ -13,6 +13,12 @@ export class VRManager {
     private tempMatrix: THREE.Matrix4;
     private vrEnabled: boolean = false;
 
+    // Movement state
+    private moveDirection: THREE.Vector2 = new THREE.Vector2();
+    private jumpState: boolean = false;
+    private shootState: boolean = false;
+    private interactState: boolean = false;
+
     constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
         this.renderer = renderer;
         this.scene = scene;
@@ -30,21 +36,79 @@ export class VRManager {
     }
 
     private setupControllers() {
-        // Controller 1
+        // Controller 1 (Left)
         this.controller1 = this.renderer.xr.getController(0);
         this.controller1.addEventListener('selectstart', this.onSelectStart.bind(this));
         this.controller1.addEventListener('selectend', this.onSelectEnd.bind(this));
+        this.controller1.addEventListener('squeezestart', this.onSqueezeStart.bind(this));
+        this.controller1.addEventListener('squeezeend', this.onSqueezeEnd.bind(this));
         this.scene.add(this.controller1);
 
-        // Controller 2
+        // Controller 2 (Right)
         this.controller2 = this.renderer.xr.getController(1);
         this.controller2.addEventListener('selectstart', this.onSelectStart.bind(this));
         this.controller2.addEventListener('selectend', this.onSelectEnd.bind(this));
+        this.controller2.addEventListener('squeezestart', this.onSqueezeStart.bind(this));
+        this.controller2.addEventListener('squeezeend', this.onSqueezeEnd.bind(this));
         this.scene.add(this.controller2);
 
         // Add controller models
         this.scene.add(this.controllerModelFactory.createControllerModel(this.controller1));
         this.scene.add(this.controllerModelFactory.createControllerModel(this.controller2));
+
+        // Set up gamepad polling
+        this.setupGamepadPolling();
+    }
+
+    private setupGamepadPolling() {
+        // Poll for gamepad state in the animation loop
+        const pollGamepads = () => {
+            const session = this.renderer.xr.getSession();
+            if (session) {
+                session.inputSources.forEach((inputSource) => {
+                    // Use type assertion to handle gamepad property
+                    const gamepad = (inputSource as any).gamepad;
+                    if (gamepad) {
+                        this.handleGamepadInput(gamepad, inputSource.handedness);
+                    }
+                });
+            }
+            requestAnimationFrame(pollGamepads);
+        };
+        pollGamepads();
+    }
+
+    private handleGamepadInput(gamepad: Gamepad, handedness: string) {
+        // Left controller (movement)
+        if (handedness === 'left') {
+            // Thumbstick for movement
+            const [x, y] = gamepad.axes;
+            this.moveDirection.set(x, y);
+
+            // A button for interaction
+            if (gamepad.buttons[0].pressed) {
+                this.interactState = true;
+            } else {
+                this.interactState = false;
+            }
+        }
+
+        // Right controller (actions)
+        if (handedness === 'right') {
+            // X button for jumping
+            if (gamepad.buttons[3].pressed) {
+                this.jumpState = true;
+            } else {
+                this.jumpState = false;
+            }
+
+            // Trigger for shooting
+            if (gamepad.buttons[0].pressed) {
+                this.shootState = true;
+            } else {
+                this.shootState = false;
+            }
+        }
     }
 
     private onSelectStart(event: any) {
@@ -57,7 +121,6 @@ export class VRManager {
 
         if (intersects.length > 0) {
             const object = intersects[0].object;
-            // Handle interaction with the object
             this.handleObjectInteraction(object);
         }
     }
@@ -66,10 +129,16 @@ export class VRManager {
         // Handle end of selection
     }
 
+    private onSqueezeStart(event: any) {
+        // Handle squeeze start (grip button)
+    }
+
+    private onSqueezeEnd(event: any) {
+        // Handle squeeze end (grip button)
+    }
+
     private handleObjectInteraction(object: THREE.Object3D) {
-        // Handle different types of interactions based on object properties
         if (object.userData.interactive) {
-            // Handle interactive objects
             if (object.userData.type === 'button') {
                 this.handleButtonPress(object);
             } else if (object.userData.type === 'portal') {
@@ -79,23 +148,19 @@ export class VRManager {
     }
 
     private handleButtonPress(button: THREE.Object3D) {
-        // Handle button press interactions
         if (button.userData.action) {
             button.userData.action();
         }
     }
 
     private handlePortalTransition(portal: THREE.Object3D) {
-        // Handle portal/transition interactions
         if (portal.userData.target) {
             window.location.href = portal.userData.target;
         }
     }
 
     public update() {
-        // Update VR-specific logic
         if (this.renderer.xr.isPresenting) {
-            // Update controller positions and handle continuous interactions
             this.updateControllers();
         }
     }
@@ -107,6 +172,22 @@ export class VRManager {
 
     public isVREnabled(): boolean {
         return this.vrEnabled;
+    }
+
+    public getMoveDirection(): THREE.Vector2 {
+        return this.moveDirection;
+    }
+
+    public isJumping(): boolean {
+        return this.jumpState;
+    }
+
+    public isShooting(): boolean {
+        return this.shootState;
+    }
+
+    public isInteracting(): boolean {
+        return this.interactState;
     }
 
     public getControllerPosition(controllerIndex: number): THREE.Vector3 {

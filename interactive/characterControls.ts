@@ -23,13 +23,15 @@ export class CharacterControls {
     private prevTime: number;
     private vrControls: any;
     private vrEnabled: boolean = false;
+    private vrManager: any;
 
-    constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
+    constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement, vrManager?: any) {
         this.camera = camera;
         this.controls = new PointerLockControls(camera, domElement);
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
         this.prevTime = performance.now();
+        this.vrManager = vrManager;
 
         // VR setup
         this.setupVR();
@@ -52,12 +54,11 @@ export class CharacterControls {
     }
 
     private setupVRControls() {
-        // VR controller setup will be handled by the main VR manager
-        // This is just a placeholder for the VR-specific movement logic
+        // VR controller setup is handled by VRManager
     }
 
     public update(delta: number, onGround: boolean): THREE.Vector3 {
-        if (this.vrEnabled) {
+        if (this.vrEnabled && this.vrManager) {
             return this.updateVRMovement(delta, onGround);
         } else {
             return this.updateKeyboardMovement(delta, onGround);
@@ -65,9 +66,37 @@ export class CharacterControls {
     }
 
     private updateVRMovement(delta: number, onGround: boolean): THREE.Vector3 {
-        // VR movement will be handled by the VR manager
-        // This is just a placeholder for the VR-specific movement logic
-        return new THREE.Vector3();
+        // Get movement direction from VR controller
+        const moveDirection = this.vrManager.getMoveDirection();
+        
+        // Apply movement based on controller input
+        this.velocity.x -= this.velocity.x * 10.0 * delta;
+        this.velocity.z -= this.velocity.z * 10.0 * delta;
+        this.velocity.y -= 9.8 * 100.0 * delta;
+
+        // Convert controller input to movement direction
+        this.direction.z = moveDirection.y;
+        this.direction.x = moveDirection.x;
+        this.direction.normalize();
+
+        // Apply movement
+        if (this.direction.z !== 0) {
+            this.velocity.z -= this.direction.z * 400.0 * delta;
+        }
+        if (this.direction.x !== 0) {
+            this.velocity.x -= this.direction.x * 400.0 * delta;
+        }
+
+        // Handle jumping
+        if (this.vrManager.isJumping() && onGround) {
+            this.velocity.y = 400.0 * delta;
+        }
+
+        if (onGround) {
+            this.velocity.y = Math.max(0, this.velocity.y);
+        }
+
+        return this.velocity;
     }
 
     private updateKeyboardMovement(delta: number, onGround: boolean): THREE.Vector3 {
