@@ -1,4 +1,4 @@
-// main.js (updated with keydown redirect and fix for uniforms cloning error)
+// main.js (with robust Gamepad "A" → "F" redirect)
 // ================================================================
 import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
@@ -59,8 +59,6 @@ new EXRLoader()
   .load("https://assets.nihaalnazeer.com/hdris/forest.exr", (texture) => {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     scene.environment = envMap; // Apply the HDRI as the environment map
-    // Optionally, you can set the background as well:
-    // scene.background = envMap;
     texture.dispose();
     pmremGenerator.dispose();
   });
@@ -68,29 +66,23 @@ new EXRLoader()
 // ================================================================
 // Lighting Setup (Three-Point Lighting)
 // ================================================================
-
-// 1. Ambient Light (low intensity so key/fill dominate)
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
-// 2. Key Light (front-facing to illuminate the face)
-//    Adjust the position as needed for optimal face lighting.
 const keyLight = new THREE.DirectionalLight(0xffffff, 0);
-keyLight.position.set(1, 2, 2);  // From front-right and above
+keyLight.position.set(1, 2, 2);
 scene.add(keyLight);
 
-// 3. Fill Light (soft light from the opposite side to fill shadows)
 const fillLight = new THREE.DirectionalLight(0xffffff, 0);
-fillLight.position.set(-1, 1, 2); // From front-left
+fillLight.position.set(-1, 1, 2);
 scene.add(fillLight);
 
-// 4. Rim Light (to accentuate edges, optional)
 const rimLight = new THREE.DirectionalLight(0xffffff, 0);
-rimLight.position.set(0, 0, -3);  // Behind the model
+rimLight.position.set(0, 0, -3);
 scene.add(rimLight);
 
 // ================================================================
-// Selective Bloom Setup using Layers (unchanged)
+// Selective Bloom Setup using Layers
 // ================================================================
 const bloomLayer = new THREE.Layers();
 bloomLayer.set(1);
@@ -99,23 +91,19 @@ bloomLayer.set(1);
 // Set up DracoLoader for mesh compression
 // ================================================================
 const dLoader = new DRACOLoader();
-// Set the decoder path (adjust as needed, or use a CDN URL)
-// If using local installation, you may need to copy Draco files into your public folder.
-dLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/'); 
+dLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
 dLoader.setDecoderConfig({ type: 'js' });
 
-// Create a GLTFLoader and attach the DracoLoader
 const loader = new GLTFLoader();
 loader.setDRACOLoader(dLoader);
 
-let loadedModel = null; // To store our model for scroll-driven rotation
+let loadedModel = null;
 
 loader.load(
   "https://assets.nihaalnazeer.com/models/superherov9.glb",
   (gltf) => {
     const model = gltf.scene;
-
-    // Center model at its feet
+    // Center at feet
     const box = new THREE.Box3().setFromObject(model);
     const feet = new THREE.Vector3(
       (box.min.x + box.max.x) / 2,
@@ -125,7 +113,7 @@ loader.load(
     model.position.sub(feet);
     model.scale.set(1.2, 1.2, 1.2);
 
-    // Set initial camera target and position based on model
+    // Camera framing
     const scaledBox = new THREE.Box3().setFromObject(model);
     const modelHeight = scaledBox.max.y - scaledBox.min.y;
     const hips = scaledBox.min.y + modelHeight * 0.5;
@@ -133,12 +121,11 @@ loader.load(
     camera.position.set(0, hips, 3.8);
     controls.update();
 
-    // Traverse model to boost HDRI reflections and configure bloom
+    // Traverse for bloom & env intensity
     model.traverse((child) => {
       if (child.isMesh && child.material) {
-        // Increase envMapIntensity to let the HDRI affect the material more
         if ("envMapIntensity" in child.material) {
-          child.material.envMapIntensity = 3.0; // Adjust this value if needed
+          child.material.envMapIntensity = 3.0;
         }
         if (child.userData.bloom === "true") {
           child.layers.enable(1);
@@ -153,7 +140,7 @@ loader.load(
     });
 
     scene.add(model);
-    loadedModel = model; // Save reference for scroll-driven rotation
+    loadedModel = model;
   },
   undefined,
   (error) => {
@@ -175,9 +162,7 @@ const composer = new EffectComposer(renderer);
 composer.addPass(renderPass);
 composer.addPass(bloomPass);
 
-// ----- FIX: Prevent cloning error -----
-// Override the clone method on the render target texture so it simply returns itself.
-// This prevents Three.js from attempting to clone a render target texture in uniforms.
+// Prevent cloning error on render target
 composer.renderTarget2.texture.clone = function() {
   return this;
 };
@@ -197,16 +182,6 @@ finalPass.needsSwap = true;
 composer.addPass(finalPass);
 
 // ================================================================
-// Animation Loop – Render the scene
-// ================================================================
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update(); // Even though interactions are disabled, damping may still update.
-  composer.render();
-}
-animate();
-
-// ================================================================
 // Handle Window Resize
 // ================================================================
 window.addEventListener("resize", () => {
@@ -219,7 +194,7 @@ window.addEventListener("resize", () => {
 });
 
 // ================================================================
-// Scroll Event to Drive Model Rotation
+// Scroll-Driven Model Rotation
 // ================================================================
 window.addEventListener("scroll", () => {
   if (loadedModel) {
@@ -230,10 +205,44 @@ window.addEventListener("scroll", () => {
 });
 
 // ================================================================
-// Keydown Event to Redirect on "F" Key Press
+// Keyboard "F" Redirect (desktop)
 // ================================================================
 document.addEventListener("keydown", (event) => {
   if (event.code === "KeyF") {
     window.location.href = "/interactive/index.html";
   }
 });
+
+// ================================================================
+// Gamepad "A" → "F" Redirect (Quest controllers)
+// ================================================================
+let aPressedLast = false;
+function pollGamepad() {
+  const gps = navigator.getGamepads && navigator.getGamepads();
+  if (!gps) return;
+
+  // check ALL connected pads for an A‐press (button index 0)
+  let anyA = false;
+  for (const gp of gps) {
+    if (gp && gp.buttons[0]?.pressed) {
+      anyA = true;
+      break;
+    }
+  }
+
+  // on newly pressed A, do redirect
+  if (anyA && !aPressedLast) {
+    window.location.href = "/interactive/index.html";
+  }
+  aPressedLast = anyA;
+}
+
+// ================================================================
+// Animation Loop – Render the scene (with Gamepad polling)
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  pollGamepad();
+  composer.render();
+}
+animate();
