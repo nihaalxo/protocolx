@@ -713,7 +713,90 @@ loader.load(
 
     // Add event listener for video end
     exitVideo.addEventListener('ended', () => {
-        window.close();
+        // Create exit message overlay with two options
+        const exitMessage = document.createElement('div');
+        exitMessage.style.position = 'fixed';
+        exitMessage.style.top = '0';
+        exitMessage.style.left = '0';
+        exitMessage.style.width = '100vw';
+        exitMessage.style.height = '100vh';
+        exitMessage.style.background = 'rgba(0, 0, 0, 0.9)';
+        exitMessage.style.display = 'flex';
+        exitMessage.style.justifyContent = 'center';
+        exitMessage.style.alignItems = 'center';
+        exitMessage.style.zIndex = '99999';
+        exitMessage.style.color = 'white';
+        exitMessage.style.fontFamily = 'Arial, sans-serif';
+        exitMessage.style.textAlign = 'center';
+        exitMessage.innerHTML = `
+            <div style="max-width: 500px; padding: 40px;">
+                <h2 style="margin-bottom: 30px; font-size: 32px;">Thanks for visiting!</h2>
+                <p style="margin-bottom: 40px; font-size: 18px; opacity: 0.9;">What would you like to do next?</p>
+                
+                <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                    <button id="reset-btn" style="
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 15px 30px;
+                        font-size: 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        transition: background 0.3s;
+                        min-width: 150px;
+                    " onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4CAF50'">
+                        🔄 Reset Experience
+                    </button>
+                    
+                    <button id="close-btn" style="
+                        background: #f44336;
+                        color: white;
+                        border: none;
+                        padding: 15px 30px;
+                        font-size: 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        transition: background 0.3s;
+                        min-width: 150px;
+                    " onmouseover="this.style.background='#da190b'" onmouseout="this.style.background='#f44336'">
+                        ❌ Close Tab
+                    </button>
+                </div>
+                
+                <p style="margin-top: 30px; font-size: 14px; opacity: 0.7;">
+                    Or press Ctrl+W (Cmd+W on Mac) to close manually
+                </p>
+            </div>
+        `;
+        document.body.appendChild(exitMessage);
+        
+        // Add event listeners for the buttons
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            window.location.reload();
+        });
+        
+        document.getElementById('close-btn').addEventListener('click', () => {
+            try {
+                window.close();
+            } catch (e) {
+                // If automatic closing fails, show a message
+                exitMessage.innerHTML = `
+                    <div style="max-width: 500px; padding: 40px; text-align: center;">
+                        <h2 style="margin-bottom: 20px;">Please close manually</h2>
+                        <p style="margin-bottom: 20px;">Press <strong>Ctrl+W</strong> (or <strong>Cmd+W</strong> on Mac) to close this tab.</p>
+                        <button onclick="window.location.reload()" style="
+                            background: #2196F3;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            font-size: 14px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        ">Or Reset Experience Instead</button>
+                    </div>
+                `;
+            }
+        });
     });
 
     // Track interaction state
@@ -1183,7 +1266,7 @@ loader.load(
       // Small delay to ensure everything is fully ready
       setTimeout(() => {
         window.hideLoadingScreen();
-      }, 7000);
+      }, 9000);
     }
   },
   (xhr) => {
