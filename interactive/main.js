@@ -713,7 +713,7 @@ loader.load(
 
     // Add event listener for video end
     exitVideo.addEventListener('ended', () => {
-        window.location.href = '../';
+        window.close();
     });
 
     // Track interaction state
@@ -1183,7 +1183,7 @@ loader.load(
       // Small delay to ensure everything is fully ready
       setTimeout(() => {
         window.hideLoadingScreen();
-      }, 2000);
+      }, 7000);
     }
   },
   (xhr) => {

@@ -42,6 +42,10 @@
         gap: 4px;
       }
 
+      .loading-message {
+        transition: opacity 0.3s ease-in-out;
+      }
+
       .dots {
         display: inline-block;
       }
@@ -87,7 +91,7 @@
     <!-- Loading Screen -->
     <div id="loading-screen">
       <div class="loading-text">
-        Your experience is loading
+        <span class="loading-message" id="loading-message">Your experience is loading</span>
         <div class="dots">
           <div class="dot"></div>
           <div class="dot"></div>
@@ -110,8 +114,35 @@
 
     <!-- Loading screen script -->
     <script>
+      // Loading messages to cycle through
+      const loadingMessages = [
+        "Your experience is loading",
+        "Tidying up the secret lair",
+        "Saving a cat from a tree",
+        "Finishing the Friends episode",
+        "Turning off the PS5"
+      ];
+
+      let currentMessageIndex = 0;
+      const messageElement = document.getElementById('loading-message');
+
+      // Function to cycle through messages
+      function cycleMessage() {
+        messageElement.style.opacity = '0';
+        
+        setTimeout(() => {
+          currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+          messageElement.textContent = loadingMessages[currentMessageIndex];
+          messageElement.style.opacity = '1';
+        }, 300);
+      }
+
+      // Start cycling messages every 1.5 seconds
+      const messageInterval = setInterval(cycleMessage, 1500);
+
       // Global function to hide loading screen when 3D content is ready
       window.hideLoadingScreen = function() {
+        clearInterval(messageInterval); // Stop cycling messages
         const loadingScreen = document.getElementById('loading-screen');
         const crosshair = document.getElementById('crosshair');
         
