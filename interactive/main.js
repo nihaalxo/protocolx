@@ -1242,27 +1242,4 @@ window.addEventListener('resize', () => {
   }
 });
 
-// -----------------------------------------------------------------
-// VIDEO PRELOADER
-// -----------------------------------------------------------------
-window.addEventListener("load", () => {
-  const overlay = document.getElementById("video-overlay");
-  const video = document.getElementById("preloader-video");
-  if (overlay && video) {
-    overlay.style.display = "block";
-    video.muted = false;
-    video.removeAttribute("muted");
-    video.currentTime = 0;
-    video.play().then(() => {
-      console.log("Auto play with sound started.");
-    }).catch((error) => {
-      console.error("Auto play error:", error);
-    });
-  }
-});
-
-const videoEl = document.getElementById("preloader-video");
-videoEl.addEventListener("ended", () => {
-  document.getElementById("video-overlay").style.display = "none";
-  window.dispatchEvent(new Event("resize"));
-});
+// Video preloader code removed since we no longer have the intro video
