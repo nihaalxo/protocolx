@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nihaal Nazeer - Interactive Portfolio</title>
-    <link rel="icon" type="image/png" href="./interactive/buttonoverlays/logo.png" />
+    <link rel="icon" type="image/png" href="https://assets.nihaalnazeer.com/buttonoverlays/logo.png" />
     <style>
       body {
         margin: 0;
@@ -106,26 +106,30 @@
 
     <!-- Loading screen script -->
     <script>
-      // Hide loading screen when everything is loaded
-      window.addEventListener('load', () => {
-        // Give a small delay to ensure everything is ready
-        setTimeout(() => {
-          const loadingScreen = document.getElementById('loading-screen');
-          const crosshair = document.getElementById('crosshair');
+      // Global function to hide loading screen when 3D content is ready
+      window.hideLoadingScreen = function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const crosshair = document.getElementById('crosshair');
+        
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          loadingScreen.style.transition = 'opacity 0.5s ease-out';
           
-          if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
-            loadingScreen.style.transition = 'opacity 0.5s ease-out';
-            
-            setTimeout(() => {
-              loadingScreen.style.display = 'none';
-              if (crosshair) {
-                crosshair.style.display = 'block';
-              }
-            }, 500);
-          }
-        }, 1000); // 1 second delay to ensure smooth transition
-      });
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            if (crosshair) {
+              crosshair.style.display = 'block';
+            }
+          }, 500);
+        }
+      };
+
+      // Fallback: hide loading screen after a maximum time (in case something goes wrong)
+      setTimeout(() => {
+        if (document.getElementById('loading-screen').style.display !== 'none') {
+          window.hideLoadingScreen();
+        }
+      }, 15000); // 15 seconds maximum wait time
     </script>
   </body>
 </html>

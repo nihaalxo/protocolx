@@ -1177,6 +1177,11 @@ loader.load(
       camera,
       'idle'
     );
+
+    // Hide loading screen now that all models are loaded
+    if (window.hideLoadingScreen) {
+      window.hideLoadingScreen();
+    }
   },
   (xhr) => {
     const percentLoaded = (xhr.loaded / xhr.total) * 100;
