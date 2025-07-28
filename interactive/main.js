@@ -1180,7 +1180,10 @@ loader.load(
 
     // Hide loading screen now that all models are loaded
     if (window.hideLoadingScreen) {
-      window.hideLoadingScreen();
+      // Small delay to ensure everything is fully ready
+      setTimeout(() => {
+        window.hideLoadingScreen();
+      }, 2000);
     }
   },
   (xhr) => {
